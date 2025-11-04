@@ -1,0 +1,12 @@
+<script lang="ts">
+	let { children } = $props();
+</script>
+
+<svelte:head>
+	<title>Calendgnar - Calendar that shreds the gnar</title>
+	<meta name="description" content="A personal calendar application that makes scheduling feel effortless and fun" />
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+</svelte:head>
+
+{@render children?.()}

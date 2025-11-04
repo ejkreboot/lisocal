@@ -1,0 +1,430 @@
+<script lang="ts">
+    import { supabase } from '$lib/supabase.js'
+    import { goto } from '$app/navigation'
+    import { page } from '$app/stores'
+    
+    let email = ''
+    let otpCode = ''
+    let isLoading = false
+    let message = ''
+    let messageType: 'success' | 'error' = 'success'
+    let showOtpInput = false
+    
+    // Check if user is coming back after email verification (fallback for magic links)
+    $: if ($page.url.hash) {
+        handleAuthCallback()
+    }
+    
+    async function handleAuthCallback() {
+        const hashParams = new URLSearchParams($page.url.hash.substring(1))
+        const accessToken = hashParams.get('access_token')
+        const refreshToken = hashParams.get('refresh_token')
+        
+        if (accessToken && refreshToken) {
+            const { error } = await supabase.auth.setSession({
+                access_token: accessToken,
+                refresh_token: refreshToken
+            })
+            
+            if (error) {
+                message = 'Authentication failed. Please try again.'
+                messageType = 'error'
+            } else {
+                goto('/', { replaceState: true })
+            }
+        }
+    }
+    
+    async function sendOTP() {
+        if (!email.trim()) {
+            message = 'Please enter your email address.'
+            messageType = 'error'
+            return
+        }
+        
+        isLoading = true
+        message = ''
+        
+        const { error } = await supabase.auth.signInWithOtp({
+            email: email.trim(),
+            options: {
+                shouldCreateUser: true
+            }
+        })
+        
+        isLoading = false
+        
+        if (error) {
+            message = error.message
+            messageType = 'error'
+        } else {
+            showOtpInput = true
+            message = `We've sent a 6-digit code to ${email}. Enter it below to sign in.`
+            messageType = 'success'
+        }
+    }
+    
+    async function verifyOTP() {
+        if (!otpCode.trim() || otpCode.length !== 6) {
+            message = 'Please enter the 6-digit code from your email.'
+            messageType = 'error'
+            return
+        }
+        
+        isLoading = true
+        message = ''
+        
+        const { data, error } = await supabase.auth.verifyOtp({
+            email: email.trim(),
+            token: otpCode.trim(),
+            type: 'email'
+        })
+        
+        isLoading = false
+        
+        if (error) {
+            message = error.message
+            messageType = 'error'
+        } else if (data.session) {
+            // Successfully signed in
+            goto('/', { replaceState: true })
+        } else {
+            message = 'Invalid code. Please try again.'
+            messageType = 'error'
+        }
+    }
+    
+    function resetForm() {
+        showOtpInput = false
+        otpCode = ''
+        message = ''
+    }
+    
+    function handleEmailKeydown(event: KeyboardEvent) {
+        if (event.key === 'Enter') {
+            sendOTP()
+        }
+    }
+    
+    function handleOtpKeydown(event: KeyboardEvent) {
+        if (event.key === 'Enter') {
+            verifyOTP()
+        }
+    }
+</script>
+
+<svelte:head>
+    <title>Sign In - Calendgnar</title>
+</svelte:head>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Calendgnar</h1>
+            <p>Sign in to access your calendar</p>
+        </div>
+        
+        <div class="auth-form">
+            {#if !showOtpInput}
+                <div class="input-group">
+                    <label for="email">Email Address</label>
+                    <input 
+                        id="email"
+                        type="email" 
+                        bind:value={email}
+                        on:keydown={handleEmailKeydown}
+                        placeholder="your@email.com"
+                        disabled={isLoading}
+                    />
+                </div>
+                
+                <button 
+                    class="auth-button" 
+                    class:loading={isLoading}
+                    on:click={sendOTP}
+                    disabled={isLoading}
+                >
+                    {isLoading ? 'Sending...' : 'Send Code'}
+                </button>
+            {:else}
+                <div class="input-group">
+                    <label for="email">Email Address</label>
+                    <input 
+                        id="email-display"
+                        type="email" 
+                        bind:value={email}
+                        disabled={true}
+                        class="disabled-input"
+                    />
+                </div>
+                
+                <div class="input-group">
+                    <label for="otp">6-Digit Code</label>
+                    <input 
+                        id="otp"
+                        type="text" 
+                        bind:value={otpCode}
+                        on:keydown={handleOtpKeydown}
+                        placeholder="123456"
+                        maxlength="6"
+                        pattern="[0-9]*"
+                        inputmode="numeric"
+                        disabled={isLoading}
+                        class="otp-input"
+                    />
+                </div>
+                
+                <button 
+                    class="auth-button" 
+                    class:loading={isLoading}
+                    on:click={verifyOTP}
+                    disabled={isLoading || otpCode.length !== 6}
+                >
+                    {isLoading ? 'Verifying...' : 'Verify Code'}
+                </button>
+                
+                <button 
+                    class="secondary-button"
+                    on:click={resetForm}
+                    disabled={isLoading}
+                >
+                    Use Different Email
+                </button>
+            {/if}
+            
+            {#if message}
+                <div class="message" class:error={messageType === 'error'} class:success={messageType === 'success'}>
+                    {message}
+                </div>
+            {/if}
+        </div>
+        
+        <div class="auth-info">
+            <p>
+                {#if !showOtpInput}
+                    We'll send you a 6-digit code to sign in. No passwords needed!
+                    <br>
+                    New to Calendgnar? Your account will be created automatically.
+                {:else}
+                    Check your email for a 6-digit code and enter it above.
+                    <br>
+                    The code expires in 10 minutes for security.
+                {/if}
+            </p>
+        </div>
+        
+        <div class="auth-footer">
+            <a href="/" class="back-link">← Back to Calendar</a>
+        </div>
+    </div>
+</div>
+
+<style>
+    :global(body) {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+    
+    .auth-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .auth-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        width: 100%;
+        overflow: hidden;
+    }
+    
+    .auth-header {
+        padding: 32px 32px 24px;
+        text-align: center;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .auth-header h1 {
+        margin: 0 0 8px 0;
+        color: #1976d2;
+        font-size: 28px;
+        font-weight: 700;
+    }
+    
+    .auth-header p {
+        margin: 0;
+        color: #666;
+        font-size: 16px;
+    }
+    
+    .auth-form {
+        padding: 32px;
+    }
+    
+    .input-group {
+        margin-bottom: 24px;
+    }
+    
+    .input-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+    }
+    
+    .input-group input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+    
+    .input-group input:focus {
+        outline: none;
+        border-color: #2196f3;
+    }
+    
+    .input-group input:disabled {
+        background: #f5f5f5;
+        cursor: not-allowed;
+    }
+    
+    .auth-button {
+        width: 100%;
+        padding: 12px 24px;
+        background: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 16px;
+    }
+    
+    .auth-button:hover:not(:disabled) {
+        background: #1976d2;
+        transform: translateY(-1px);
+    }
+    
+    .auth-button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .auth-button.loading {
+        position: relative;
+    }
+    
+    .secondary-button {
+        width: 100%;
+        padding: 10px 24px;
+        background: transparent;
+        color: #2196f3;
+        border: 2px solid #2196f3;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 12px;
+    }
+    
+    .secondary-button:hover:not(:disabled) {
+        background: #2196f3;
+        color: white;
+    }
+    
+    .secondary-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .disabled-input {
+        background: #f5f5f5 !important;
+        color: #999 !important;
+        cursor: not-allowed !important;
+    }
+    
+    .otp-input {
+        text-align: center;
+        font-size: 18px;
+        letter-spacing: 0.5em;
+        font-weight: 600;
+    }
+    
+    .message {
+        padding: 12px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        text-align: center;
+    }
+    
+    .message.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .message.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+    
+    .auth-info {
+        padding: 0 32px 24px;
+        text-align: center;
+    }
+    
+    .auth-info p {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+    }
+    
+    .auth-footer {
+        padding: 24px 32px;
+        background: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+        text-align: center;
+    }
+    
+    .back-link {
+        color: #2196f3;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 14px;
+        transition: color 0.2s;
+    }
+    
+    .back-link:hover {
+        color: #1976d2;
+    }
+    
+    @media (max-width: 480px) {
+        .auth-card {
+            margin: 0;
+            border-radius: 0;
+            min-height: 100vh;
+        }
+        
+        .auth-container {
+            padding: 0;
+        }
+    }
+</style>
