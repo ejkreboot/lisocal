@@ -20,6 +20,15 @@
     let isSaving = false
     let editingEventId: string | null = null
     
+    // Tooltip functionality
+    let tooltip = {
+        visible: false,
+        text: '',
+        x: 0,
+        y: 0,
+        style: ''
+    }
+    
     // Reactive statement to update grid when year/month changes
     $: {
         calendarGrid = getCalendarGrid(year, month)
@@ -350,6 +359,58 @@
         }
         return ''
     }
+    
+    function showTooltip(event: MouseEvent, title: string, time?: string, eventObj?: CalendarEvent) {
+        if (!title) return
+        
+        // Check if the element is actually truncated
+        const target = event.target as HTMLElement
+        const eventTitleElement = target.closest('.event-title, .agenda-event-title') || target
+        
+        if (eventTitleElement && eventTitleElement.scrollWidth > eventTitleElement.clientWidth) {
+            let tooltipText = title
+            if (time && time.trim()) {
+                tooltipText = `${time} - ${title}`
+            }
+            
+            // Get event styling
+            let style = ''
+            if (eventObj?.isExternal && eventObj?.externalCalendarUrl) {
+                const colors = getExternalCalendarColor(eventObj.externalCalendarUrl)
+                style = `border-color: ${colors.bg}; color: ${colors.bg};`
+            } else {
+                style = 'border-color: #2196f3; color: #2196f3;'
+            }
+            
+            tooltip = {
+                visible: true,
+                text: tooltipText,
+                x: event.clientX,
+                y: event.clientY - 10,
+                style: style
+            }
+        }
+    }
+    
+    function hideTooltip() {
+        tooltip = {
+            visible: false,
+            text: '',
+            x: 0,
+            y: 0,
+            style: ''
+        }
+    }
+    
+    function moveTooltip(event: MouseEvent) {
+        if (tooltip.visible) {
+            tooltip = {
+                ...tooltip,
+                x: event.clientX,
+                y: event.clientY - 10
+            }
+        }
+    }
 </script>
 
 <!-- Desktop View -->
@@ -424,7 +485,12 @@
                                                 {#if !event.isAllDay && event.startTime}
                                                     <div class="event-time">{formatEventTime(event)}</div>
                                                 {/if}
-                                                <div class="event-title">{event.title}</div>
+                                                <div 
+                                                    class="event-title"
+                                                    on:mouseenter={(e) => showTooltip(e, event.title, formatEventTime(event), event)}
+                                                    on:mouseleave={hideTooltip}
+                                                    on:mousemove={moveTooltip}
+                                                >{event.title}</div>
                                             </div>
                                             {#if canEdit}
                                                 {#if event.isExternal}
@@ -526,7 +592,12 @@
                                         {#if !event.isAllDay && event.startTime}
                                             <div class="agenda-event-time">{formatEventTime(event)}</div>
                                         {/if}
-                                        <div class="agenda-event-title">{event.title}</div>
+                                        <div 
+                                            class="agenda-event-title"
+                                            on:mouseenter={(e) => showTooltip(e, event.title, formatEventTime(event), event)}
+                                            on:mouseleave={hideTooltip}
+                                            on:mousemove={moveTooltip}
+                                        >{event.title}</div>
                                     </div>
                                     {#if canEdit}
                                         {#if event.isExternal}
@@ -581,7 +652,38 @@
     {/each}
 </div>
 
+<!-- Custom Tooltip -->
+{#if tooltip.visible}
+    <div 
+        class="custom-tooltip" 
+        style="left: {tooltip.x}px; top: {tooltip.y}px; {tooltip.style}"
+    >
+        {tooltip.text}
+    </div>
+{/if}
+
 <style>
+    /* Date numbers and headers use DM Sans */
+    .day-header,
+    .day-number,
+    .agenda-day-number,
+    .agenda-day-name {
+        font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    /* Events use Dosis */
+    .event,
+    .event-title,
+    .event-time,
+    .agenda-event,
+    .agenda-event-title,
+    .agenda-event-time,
+    .event-input,
+    .agenda-event-input,
+    .agenda-add-event {
+        font-family: 'Dosis', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
     .calendar-grid {
         width: 100%;
         min-width: 980px;
@@ -1032,6 +1134,38 @@
     @media (min-width: 769px) {
         .calendar-grid.desktop-view {
             overflow-x: auto;
+        }
+    }
+    
+    /* Custom Tooltip */
+    .custom-tooltip {
+        position: fixed;
+        background: white;
+        border: 1px solid #2196f3;
+        color: #2196f3;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-family: 'Dosis', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        max-width: 300px;
+        word-wrap: break-word;
+        z-index: 1000;
+        pointer-events: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transform: translateX(-50%);
+        opacity: 0;
+        animation: tooltipFadeIn 0.2s ease-out forwards;
+    }
+    
+    @keyframes tooltipFadeIn {
+        from {
+            opacity: 0;
+            transform: translateX(-50%) translateY(-5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
         }
     }
 </style>

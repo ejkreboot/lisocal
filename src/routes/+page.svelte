@@ -147,7 +147,7 @@
 </script>
 
 <svelte:head>
-    <title>Calendgnar - {monthName} {currentYear}</title>
+    <title>lisocal - {monthName} {currentYear}</title>
     <meta name="description" content="A personal calendar that shreds the gnar" />
 </svelte:head>
 
@@ -155,21 +155,19 @@
     <header class="calendar-header">
         <div class="header-left">
             <div class="logo-title">
-                <img src="/logo-navbar.png" alt="Calendgnar logo" class="navbar-logo" />
-                <h1>Calendgnar</h1>
-            </div>
-            {#if data.sharedCalendar}
-                <div class="shared-calendar-info">
-                    <div class="calendar-title-row">
+                <img src="/icon-192.png" alt="lisocal logo" class="navbar-logo" />
+                <h1>lisocal</h1>
+                {#if data.sharedCalendar}
+                    <span class="separator">•</span>
+                    <div class="calendar-info-inline">
                         <span class="calendar-name">{data.sharedCalendar.name}</span>
                         {#if data.sharedCalendar.ownerEmail}
                             <span class="owner-email">{data.sharedCalendar.ownerEmail}</span>
                         {/if}
                     </div>
-                </div>
-            {:else if $user && userCalendar}
-                <div class="shared-calendar-info">
-                    <div class="calendar-title-row">
+                {:else if $user && userCalendar}
+                    <span class="separator">•</span>
+                    <div class="calendar-info-inline">
                         {#if editingTitle}
                             <input 
                                 class="title-input"
@@ -187,8 +185,8 @@
                             <span class="owner-email">{$user.email}</span>
                         {/if}
                     </div>
-                </div>
-            {/if}
+                {/if}
+            </div>
         </div>
         
         <div class="header-center">
@@ -221,10 +219,21 @@
                     >
                         <span class="material-symbols-outlined" style="font-size: 16px;">captive_portal</span>
                     </button>
-                    <button on:click={() => showShareDialog = true} class="share-button" disabled={!userCalendar?.id}>
-                        Share
+                    <button 
+                        on:click={() => showShareDialog = true} 
+                        class="share-button icon-button" 
+                        disabled={!userCalendar?.id}
+                        title="Share Calendar"
+                    >
+                        <span class="material-symbols-outlined" style="font-size: 16px;">share</span>
                     </button>
-                    <button on:click={handleSignOut} class="logout-button">Sign Out</button>
+                    <button 
+                        on:click={handleSignOut} 
+                        class="logout-button icon-button"
+                        title="Sign Out"
+                    >
+                        <span class="material-symbols-outlined" style="font-size: 16px;">logout</span>
+                    </button>
                 {/if}
             {/if}
         </div>
@@ -287,6 +296,17 @@
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         background: #f8f9fa;
     }
+
+    /* Header and navigation elements use DM Sans */
+    .calendar-header,
+    .calendar-header h1,
+    .month-year,
+    .today-button,
+    .nav-button,
+    .calendar-name,
+    .calendar-name-button {
+        font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
     
     .calendar-container {
         min-height: 100vh;
@@ -307,31 +327,36 @@
     
     .header-left h1 {
         margin: 0;
-        color: #1976d2;
+        font-family: "DM Sans";
+        color: #868686;
         font-size: 24px;
-        font-weight: 700;
+        font-weight: 300;
     }
     
     .logo-title {
         display: flex;
         align-items: center;
         gap: 12px;
+        flex-wrap: wrap;
     }
     
     .navbar-logo {
-        width: 40px;
-        height: 40px;
+        width: 30px;
+        height: 30px;
         object-fit: contain;
     }
     
-    .shared-calendar-info {
-        margin-top: 4px;
+    .separator {
+        color: #ccc;
+        font-size: 16px;
+        margin: 0 8px;
     }
     
-    .calendar-title-row {
+    .calendar-info-inline {
         display: flex;
         align-items: center;
         gap: 8px;
+        flex-wrap: wrap;
     }
     
     .calendar-name {
@@ -394,23 +419,27 @@
     }
     
     .nav-button {
-        background: #f5f5f5;
-        border: 1px solid #ddd;
-        border-radius: 6px;
+        background: #f8f9fa;
+        border: 1px solid transparent;
+        border-radius: 8px;
         width: 36px;
         height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        font-size: 18px;
+        font-size: 16px;
         color: #666;
-        transition: all 0.2s;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
     }
     
     .nav-button:hover {
-        background: #e0e0e0;
-        color: #333;
+        background: #e9ecef;
+        border-color: #dee2e6;
+        color: #495057;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .month-year {
@@ -423,25 +452,30 @@
     }
     
     .today-button {
-        background: #2196f3;
-        color: white;
-        border: none;
-        border-radius: 6px;
+        background: #eff6ff;
+        color: #2563eb;
+        border: 1px solid transparent;
+        border-radius: 8px;
         padding: 8px 16px;
         cursor: pointer;
         font-size: 14px;
         font-weight: 500;
-        transition: background-color 0.2s;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
     }
     
     .today-button:hover {
-        background: #1976d2;
+        background: #dbeafe;
+        border-color: #bfdbfe;
+        color: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .header-right {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 4px;
     }
     
     .login-button, .cta-button {
@@ -458,86 +492,81 @@
         background: #1976d2;
     }
     
-    .share-button {
-        background: #ff9800;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin-right: 8px;
-    }
-    
-    .share-button:hover:not(:disabled) {
-        background: #f57c00;
-    }
-    
-    .share-button:disabled {
-        background: #ccc;
-        cursor: not-allowed;
-    }
-    
     .icon-button {
-        background: #f5f5f5;
+        background: #f8f9fa;
         color: #666;
-        border: none;
-        padding: 8px;
-        border-radius: 6px;
+        border: 1px solid transparent;
+        padding: 10px;
+        border-radius: 8px;
         cursor: pointer;
-        transition: all 0.2s;
-        margin-right: 8px;
+        transition: all 0.2s ease;
+        margin-right: 6px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 14px;
-    }
-    
-    .todo-button {
-        background: #9c27b0;
-        color: white;
-    }
-    
-    .todo-button:hover {
-        background: #7b1fa2;
-    }
-    
-    .external-cal-button {
-        background: #4caf50;
-        color: white;
-    }
-    
-    .external-cal-button:hover {
-        background: #45a049;
+        width: 36px;
+        height: 36px;
+        box-sizing: border-box;
     }
     
     .icon-button:hover {
-        background: #e5e5e5;
+        background: #e9ecef;
+        border-color: #dee2e6;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .icon-button:disabled {
+        background: #f8f9fa;
+        color: #adb5bd;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .icon-button:disabled:hover {
+        background: #f8f9fa;
+        border-color: transparent;
+    }
+    
+    .todo-button {
+        background: #f8f5ff;
+        color: #7c3aed;
     }
     
     .todo-button:hover {
-        background: #7b1fa2;
+        background: #f3f0ff;
+        color: #6d28d9;
+    }
+    
+    .external-cal-button {
+        background: #f0fdf4;
+        color: #16a34a;
     }
     
     .external-cal-button:hover {
-        background: #45a049;
+        background: #dcfce7;
+        color: #15803d;
+    }
+    
+    .share-button {
+        background: #fff7ed;
+        color: #ea580c;
+    }
+    
+    .share-button:hover:not(:disabled) {
+        background: #fed7aa;
+        color: #c2410c;
     }
     
     .logout-button {
-        background: #f5f5f5;
-        color: #666;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
+        background: #fef2f2;
+        color: #dc2626;
     }
     
     .logout-button:hover {
-        background: #e0e0e0;
-        color: #333;
+        background: #fecaca;
+        color: #b91c1c;
     }
     
     .loading-container {

@@ -1,6 +1,6 @@
-# Calendgnar 🎿
+# lisocal 
 
-A personal calendar that shreds the gnar! Built with SvelteKit and Supabase.
+A seamless, easy personal calendar. Built with SvelteKit and Supabase.
 
 ## Features
 
@@ -15,7 +15,7 @@ A personal calendar that shreds the gnar! Built with SvelteKit and Supabase.
 1. **Clone and install dependencies**:
    ```bash
    git clone <repository-url>
-   cd calendgnar
+   cd lisocal
    npm install
    ```
 

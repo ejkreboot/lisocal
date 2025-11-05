@@ -114,13 +114,13 @@
 </script>
 
 <svelte:head>
-    <title>Sign In - Calendgnar</title>
+    <title>Sign In - lisocal</title>
 </svelte:head>
 
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
-            <h1>Calendgnar</h1>
+            <h1>lisocal</h1>
             <p>Sign in to access your calendar</p>
         </div>
         
@@ -204,7 +204,7 @@
                 {#if !showOtpInput}
                     We'll send you a 6-digit code to sign in. No passwords needed!
                     <br>
-                    New to Calendgnar? Your account will be created automatically.
+                    New to lisocal? Your account will be created automatically.
                 {:else}
                     Check your email for a 6-digit code and enter it above.
                     <br>

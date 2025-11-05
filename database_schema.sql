@@ -1,4 +1,4 @@
--- Calendgnar Database Schema
+-- lisocal Database Schema
 -- Run this script in the Supabase SQL editor to set up the database
 
 -- Enable RLS (Row Level Security) by default

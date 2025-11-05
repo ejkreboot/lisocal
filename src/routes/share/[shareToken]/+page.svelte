@@ -39,16 +39,16 @@
 </script>
 
 <svelte:head>
-    <title>Calendgnar - {data.sharedCalendar?.name || 'Shared Calendar'} - {monthName} {currentYear}</title>
-    <meta name="description" content="Shared calendar on Calendgnar" />
+    <title>lisocal - {data.sharedCalendar?.name || 'Shared Calendar'} - {monthName} {currentYear}</title>
+    <meta name="description" content="Shared calendar on lisocal" />
 </svelte:head>
 
 <div class="calendar-container">
     <header class="calendar-header">
         <div class="header-left">
             <div class="logo-title">
-                <img src="/logo-navbar.png" alt="Calendgnar logo" class="navbar-logo" />
-                <h1>Calendgnar</h1>
+                <img src="/logo-navbar.png" alt="lisocal logo" class="navbar-logo" />
+                <h1>lisocal</h1>
             </div>
             <div class="shared-calendar-info">
                 <div class="calendar-title-row">
@@ -87,7 +87,7 @@
             <div class="no-calendar">
                 <h2>Calendar Not Available</h2>
                 <p>This shared calendar link may have expired or been removed.</p>
-                <a href="/" class="cta-button">Go to Calendgnar</a>
+                <a href="/" class="cta-button">Go to lisocal</a>
             </div>
         {/if}
     </main>
@@ -119,9 +119,10 @@
     
     .header-left h1 {
         margin: 0;
-        color: #1976d2;
+        font-family: "DM Sans";
+        color: #868686;
         font-size: 24px;
-        font-weight: 700;
+        font-weight: 300;
     }
     
     .logo-title {

@@ -1,6 +1,6 @@
 # OTP Authentication Setup
 
-The Calendgnar app now uses a proper OTP (One-Time Password) authentication flow where users receive a 6-digit code via email instead of a magic link.
+The lisocal app now uses a proper OTP (One-Time Password) authentication flow where users receive a 6-digit code via email instead of a magic link.
 
 ## How it Works
 
