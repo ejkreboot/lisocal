@@ -681,14 +681,6 @@
         justify-content: space-between;
     }
     
-    .event.all-day {
-        background: transparent;
-        color: #faa336;
-        border: 1px solid #faa336;
-    }
-    
-
-    
     .event-content {
         cursor: pointer;
         flex: 1;
@@ -720,7 +712,7 @@
     .delete-event {
         background: none;
         border: none;
-        color: white;
+        color: currentColor;
         cursor: pointer;
         padding: 0;
         margin-left: 4px;
@@ -901,19 +893,6 @@
         color: #1976d2;
     }
     
-    .agenda-event.all-day {
-        background: transparent;
-        color: #ff9800;
-        border: 1px solid #ff9800;
-    }
-    
-    .agenda-event.all-day:hover {
-        border-color: #f57c00;
-        color: #f57c00;
-    }
-    
-
-    
     .event.external {
         cursor: default;
     }
@@ -950,7 +929,7 @@
     .agenda-delete-event {
         background: none;
         border: none;
-        color: white;
+        color: currentColor;
         cursor: pointer;
         padding: 4px 8px;
         margin-left: 8px;
