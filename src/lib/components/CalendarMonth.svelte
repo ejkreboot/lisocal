@@ -111,7 +111,7 @@
         
         // Focus the input after it's rendered
         setTimeout(() => {
-            const input = document.querySelector('.event-input') as HTMLInputElement
+            const input = document.querySelector('.event-input, .agenda-event-input') as HTMLInputElement
             if (input) {
                 input.focus()
             }
@@ -120,6 +120,7 @@
     
     async function startEditingEvent(event: CalendarEvent, row: number, col: number) {
         if (!canEdit) return
+        if (event.isExternal) return // External events cannot be edited
         
         // If we're already editing a different cell, save the current edit first
         if (editingCell && (editingCell.row !== row || editingCell.col !== col)) {
@@ -141,7 +142,7 @@
         
         // Focus the input after it's rendered
         setTimeout(() => {
-            const input = document.querySelector('.event-input') as HTMLInputElement
+            const input = document.querySelector('.event-input, .agenda-event-input') as HTMLInputElement
             if (input) {
                 input.focus()
                 // Select all text for easy editing
@@ -282,7 +283,7 @@
             
             // Focus the input after it's rendered and set cursor to end
             setTimeout(() => {
-                const input = document.querySelector('.event-input') as HTMLInputElement
+                const input = document.querySelector('.event-input, .agenda-event-input') as HTMLInputElement
                 if (input) {
                     input.focus()
                     input.setSelectionRange(editText.length, editText.length)
@@ -345,7 +346,7 @@
     function getEventStyle(event: CalendarEvent): string {
         if (event.isExternal && event.externalCalendarUrl) {
             const colors = getExternalCalendarColor(event.externalCalendarUrl)
-            return `background-color: ${colors.bg}; color: ${colors.text}; border-left: 3px solid ${colors.bg};`
+            return `background-color: transparent; color: ${colors.bg}; border: 1px solid ${colors.bg};`
         }
         return ''
     }
@@ -390,47 +391,62 @@
                             
                             <div class="events">
                                 {#each day.events as event}
-                                    <div class="event" class:all-day={event.isAllDay} class:editing-event={editingEventId === event.id} class:external={event.isExternal} style={getEventStyle(event)}>
-                                        <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                        <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-                                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                                        <div 
-                                            class="event-content" 
-                                            role={canEdit ? "button" : undefined}
-                                            tabindex={canEdit ? 0 : undefined}
-                                            aria-label="{event.isAllDay ? 'All day event' : formatEventTime(event)}: {event.title}{event.isExternal ? ' (imported from external calendar)' : ''}{canEdit ? ', click to edit' : ''}"
-                                            on:click|stopPropagation={() => canEdit && startEditingEvent(event, row, col)}
-                                            on:keydown={(e) => {
-                                                if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
-                                                    e.preventDefault();
-                                                    startEditingEvent(event, row, col);
-                                                }
-                                            }}
-                                        >
-                                            {#if !event.isAllDay && event.startTime}
-                                                <div class="event-time">{formatEventTime(event)}</div>
+                                    {#if editingEventId === event.id}
+                                        <!-- Show input field when editing this specific event -->
+                                        <input 
+                                            class="event-input editing-inline"
+                                            bind:value={editText}
+                                            on:keydown={handleKeydown}
+                                            on:blur={saveEvent}
+                                            on:click|stopPropagation
+                                            placeholder="8A-9A Meeting or All day event"
+                                            aria-label="Editing event: {event.title}. Enter time and title, or just title for all-day event. Press Enter to save, Escape to cancel."
+                                        />
+                                    {:else}
+                                        <!-- Show normal event display -->
+                                        <div class="event" class:all-day={event.isAllDay} class:external={event.isExternal} style={getEventStyle(event)}>
+                                            <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                            <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+                                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                            <div 
+                                                class="event-content" 
+                                                role={canEdit ? "button" : undefined}
+                                                tabindex={canEdit ? 0 : undefined}
+                                                aria-label="{event.isAllDay ? 'All day event' : formatEventTime(event)}: {event.title}{event.isExternal ? ' (imported from external calendar)' : ''}{canEdit ? ', click to edit' : ''}"
+                                                on:click|stopPropagation={() => canEdit && startEditingEvent(event, row, col)}
+                                                on:keydown={(e) => {
+                                                    if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+                                                        e.preventDefault();
+                                                        startEditingEvent(event, row, col);
+                                                    }
+                                                }}
+                                            >
+                                                {#if !event.isAllDay && event.startTime}
+                                                    <div class="event-time">{formatEventTime(event)}</div>
+                                                {/if}
+                                                <div class="event-title">{event.title}</div>
+                                            </div>
+                                            {#if canEdit}
+                                                {#if event.isExternal}
+                                                    <span 
+                                                        class="external-indicator material-symbols-outlined"
+                                                        title="Imported from external calendar"
+                                                    >captive_portal</span>
+                                                {:else}
+                                                    <button 
+                                                        class="delete-event"
+                                                        on:click|stopPropagation={() => deleteEvent(event.id)}
+                                                        aria-label="Delete event: {event.title}"
+                                                        title="Delete event"
+                                                    >×</button>
+                                                {/if}
                                             {/if}
-                                            <div class="event-title">{event.title}</div>
                                         </div>
-                                        {#if canEdit}
-                                            {#if event.isExternal}
-                                                <span 
-                                                    class="external-indicator material-symbols-outlined"
-                                                    title="Imported from external calendar"
-                                                >captive_portal</span>
-                                            {:else}
-                                                <button 
-                                                    class="delete-event"
-                                                    on:click|stopPropagation={() => deleteEvent(event.id)}
-                                                    aria-label="Delete event: {event.title}"
-                                                    title="Delete event"
-                                                >×</button>
-                                            {/if}
-                                        {/if}
-                                    </div>
+                                    {/if}
                                 {/each}
                                 
-                                {#if editingCell?.row === row && editingCell?.col === col}
+                                {#if editingCell?.row === row && editingCell?.col === col && !editingEventId}
+                                    <!-- Show input field when adding new event (not editing existing) -->
                                     <input 
                                         class="event-input"
                                         bind:value={editText}
@@ -474,48 +490,61 @@
                 {#if dayEvents.length > 0}
                     <div class="agenda-events">
                         {#each dayEvents as event}
-                            <!-- svelte-ignore a11y-click-events-have-key-events -->
-                            <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
-                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
-                            <div 
-                                class="agenda-event" 
-                                class:all-day={event.isAllDay} 
-                                class:editing-event={editingEventId === event.id}
-                                class:external={event.isExternal}
-                                style={getEventStyle(event)}
-                                role={canEdit ? "button" : "listitem"}
-                                tabindex={canEdit ? 0 : undefined}
-                                aria-label="{event.isAllDay ? 'All day event' : formatEventTime(event)}: {event.title}{event.isExternal ? ' (imported from external calendar)' : ''}{canEdit ? ', click to edit' : ''}"
-                                on:click={() => canEdit && startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7)}
-                                on:keydown={(e) => {
-                                    if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
-                                        e.preventDefault();
-                                        startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7);
-                                    }
-                                }}
-                            >
-                                <div class="agenda-event-content">
-                                    {#if !event.isAllDay && event.startTime}
-                                        <div class="agenda-event-time">{formatEventTime(event)}</div>
+                            {#if editingEventId === event.id}
+                                <!-- Show input field when editing this specific event -->
+                                <input 
+                                    class="agenda-event-input editing-inline"
+                                    bind:value={editText}
+                                    on:keydown={handleKeydown}
+                                    on:blur={saveEvent}
+                                    on:click|stopPropagation
+                                    placeholder="8A-9A Meeting or All day event"
+                                    aria-label="Editing event: {event.title}. Enter time and title, or just title for all-day event. Press Enter to save, Escape to cancel."
+                                />
+                            {:else}
+                                <!-- Show normal event display -->
+                                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+                                <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                <div 
+                                    class="agenda-event" 
+                                    class:all-day={event.isAllDay} 
+                                    class:external={event.isExternal}
+                                    style={getEventStyle(event)}
+                                    role={canEdit ? "button" : "listitem"}
+                                    tabindex={canEdit ? 0 : undefined}
+                                    aria-label="{event.isAllDay ? 'All day event' : formatEventTime(event)}: {event.title}{event.isExternal ? ' (imported from external calendar)' : ''}{canEdit ? ', click to edit' : ''}"
+                                    on:click={() => canEdit && startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7)}
+                                    on:keydown={(e) => {
+                                        if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+                                            e.preventDefault();
+                                            startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7);
+                                        }
+                                    }}
+                                >
+                                    <div class="agenda-event-content">
+                                        {#if !event.isAllDay && event.startTime}
+                                            <div class="agenda-event-time">{formatEventTime(event)}</div>
+                                        {/if}
+                                        <div class="agenda-event-title">{event.title}</div>
+                                    </div>
+                                    {#if canEdit}
+                                        {#if event.isExternal}
+                                            <span 
+                                                class="agenda-external-indicator material-symbols-outlined"
+                                                title="Imported from external calendar"
+                                            >captive_portal</span>
+                                        {:else}
+                                            <button 
+                                                class="agenda-delete-event"
+                                                on:click|stopPropagation={() => deleteEvent(event.id)}
+                                                aria-label="Delete event: {event.title}"
+                                                title="Delete event"
+                                            >×</button>
+                                        {/if}
                                     {/if}
-                                    <div class="agenda-event-title">{event.title}</div>
                                 </div>
-                                {#if canEdit}
-                                    {#if event.isExternal}
-                                        <span 
-                                            class="agenda-external-indicator material-symbols-outlined"
-                                            title="Imported from external calendar"
-                                        >captive_portal</span>
-                                    {:else}
-                                        <button 
-                                            class="agenda-delete-event"
-                                            on:click|stopPropagation={() => deleteEvent(event.id)}
-                                            aria-label="Delete event: {event.title}"
-                                            title="Delete event"
-                                        >×</button>
-                                    {/if}
-                                {/if}
-                            </div>
+                            {/if}
                         {/each}
                     </div>
                 {:else}
@@ -640,8 +669,9 @@
     }
     
     .event {
-        background: #2196f3;
-        color: white;
+        background: transparent;
+        color: #2196f3;
+        border: 1px solid #2196f3;
         padding: 2px 6px;
         border-radius: 4px;
         font-size: 12px;
@@ -652,15 +682,12 @@
     }
     
     .event.all-day {
-        background: #faa336;
+        background: transparent;
+        color: #faa336;
+        border: 1px solid #faa336;
     }
     
 
-    
-    .event.editing-event {
-        background: #ff9800;
-        box-shadow: 0 0 0 2px #ff9800;
-    }
     
     .event-content {
         cursor: pointer;
@@ -709,11 +736,11 @@
     }
     
     .external-indicator {
-        color: white;
+        color: currentColor;
         margin-left: 4px;
         font-size: 12px;
         font-weight: normal;
-        opacity: 0.9;
+        opacity: 0.7;
         flex-shrink: 0;
         display: inline-flex;
         align-items: center;
@@ -737,6 +764,42 @@
     .event-input::placeholder {
         color: #999;
         font-size: 11px;
+    }
+
+    .event-input.editing-inline {
+        /* Style to match the event it's replacing */
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 12px;
+        border: 1px solid #2196f3;
+        background: white;
+        color: #2196f3;
+    }
+
+    .agenda-event-input {
+        width: 100%;
+        max-width: 100%;
+        border: 1px solid #2196f3;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 14px;
+        background: white;
+        outline: none;
+        box-sizing: border-box;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .agenda-event-input.editing-inline {
+        /* Style to match the agenda event it's replacing */
+        color: #2196f3;
+        border: 1px solid #2196f3;
+        background: transparent;
+    }
+
+    .agenda-event-input::placeholder {
+        color: #999;
+        font-size: 13px;
     }
     
     /* Mobile View Styles */
@@ -816,17 +879,17 @@
     }
     
     .agenda-event {
-        background: #2196f3;
-        color: white;
+        background: transparent;
+        color: #2196f3;
+        border: 1px solid #2196f3;
         border-radius: 6px;
         padding: 8px 12px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: border-color 0.2s, color 0.2s;
         /* Reset button styles when used as button */
-        border: none;
         margin: 0;
         font: inherit;
         text-align: left;
@@ -834,27 +897,34 @@
     }
     
     .agenda-event:hover {
-        background: #1976d2;
+        border-color: #1976d2;
+        color: #1976d2;
     }
     
     .agenda-event.all-day {
-        background: #ff9800;
+        background: transparent;
+        color: #ff9800;
+        border: 1px solid #ff9800;
     }
     
     .agenda-event.all-day:hover {
-        background: #f57c00;
+        border-color: #f57c00;
+        color: #f57c00;
     }
     
 
     
+    .event.external {
+        cursor: default;
+    }
+
+    .agenda-event.external {
+        cursor: default;
+    }
+
     .agenda-event.external:hover {
         /* Slightly darken the color on hover for external events */
         filter: brightness(0.9);
-    }
-    
-    .agenda-event.editing-event {
-        background: #ff9800;
-        box-shadow: 0 0 0 2px #ff9800;
     }
     
     .agenda-event-content {
@@ -898,11 +968,11 @@
     }
     
     .agenda-external-indicator {
-        color: white;
+        color: currentColor;
         margin-left: 8px;
         font-size: 16px;
         font-weight: normal;
-        opacity: 0.9;
+        opacity: 0.7;
         flex-shrink: 0;
         padding: 4px 8px;
         display: inline-flex;
