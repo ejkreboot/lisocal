@@ -502,6 +502,8 @@
                                                 {/if}
                                                 <div 
                                                     class="event-title"
+                                                    role="button"
+                                                    tabindex="0"
                                                     on:mouseenter={(e) => showTooltip(e, event.title, formatEventTime(event), event)}
                                                     on:mouseleave={hideTooltip}
                                                     on:mousemove={moveTooltip}
@@ -609,6 +611,8 @@
                                         {/if}
                                         <div 
                                             class="agenda-event-title"
+                                            role="button"
+                                            tabindex="0"
                                             on:mouseenter={(e) => showTooltip(e, event.title, formatEventTime(event), event)}
                                             on:mouseleave={hideTooltip}
                                             on:mousemove={moveTooltip}

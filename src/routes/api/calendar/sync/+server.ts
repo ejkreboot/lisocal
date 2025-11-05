@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit'
 import type { RequestHandler } from '@sveltejs/kit'
 import { supabaseAdmin } from '$lib/supabase-admin.js'
-import * as ical from 'node-ical'
+import ical from 'node-ical'
 import { formatDateForDb } from '$lib/calendar-utils.js'
 
 interface SyncRequest {
@@ -124,6 +124,12 @@ export const POST: RequestHandler = async ({ locals, request }) => {
             
             // Only process VEVENT type events
             if (icalEvent.type !== 'VEVENT' || !icalEvent.uid || !icalEvent.summary || !icalEvent.start) {
+                continue
+            }
+
+            // Skip "Unavailable" events with empty descriptions
+            if (icalEvent.summary === 'Unavailable' && (!icalEvent.description || icalEvent.description.trim() === '')) {
+                console.log(`Skipping "Unavailable" event with UID: ${icalEvent.uid}`)
                 continue
             }
 

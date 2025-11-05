@@ -16,6 +16,7 @@
     let editingId: string | null = null
     let editText = ''
     let draggedTodo: any = null
+    let draggedTodoId: string | null = null
     let dragOverIndex = -1
     let dragOverSection: 'incomplete' | 'completed' | null = null
     
@@ -259,18 +260,11 @@
         if (!canEdit || todo.completed) return
         
         draggedTodo = todo
+        draggedTodoId = todo.id
         if (event.dataTransfer) {
             event.dataTransfer.effectAllowed = 'move'
             event.dataTransfer.setData('text/html', '')
         }
-        
-        // Add a slight delay to show drag feedback
-        setTimeout(() => {
-            const draggedElement = event.target as HTMLElement
-            if (draggedElement) {
-                draggedElement.classList.add('dragging')
-            }
-        }, 0)
     }
     
     function handleDragOver(event: DragEvent, index: number) {
@@ -363,19 +357,15 @@
         }
     }
     
-    function handleDragEnd() {
-        resetDrag()
-    }
-    
     function resetDrag() {
-        // Remove dragging class from all elements
-        document.querySelectorAll('.todo-item.dragging').forEach(el => {
-            el.classList.remove('dragging')
-        })
-        
         draggedTodo = null
+        draggedTodoId = null
         dragOverIndex = -1
         dragOverSection = null
+    }
+    
+    function handleDragEnd() {
+        resetDrag()
     }
     
     $: completedTodos = todos.filter(t => t.completed)
@@ -436,6 +426,7 @@
                                         class:completed={todo.completed}
                                         class:drag-over={dragOverIndex === index && dragOverSection === 'incomplete'}
                                         class:draggable={canEdit}
+                                        class:dragging={draggedTodoId === todo.id}
                                         draggable={canEdit}
                                         on:dragstart={(e) => handleDragStart(e, todo)}
                                         on:dragover={(e) => handleDragOver(e, index)}
@@ -443,7 +434,6 @@
                                         on:drop={(e) => handleDrop(e, todo, index)}
                                         on:dragend={handleDragEnd}
                                         role="listitem"
-                                        tabindex={canEdit ? 0 : undefined}
                                     >
                                         {#if canEdit}
                                             <div class="drag-handle" title="Drag to reorder">

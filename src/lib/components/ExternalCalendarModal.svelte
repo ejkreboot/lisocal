@@ -199,7 +199,7 @@
             <div class="modal-header">
                 <h2>External Calendars</h2>
                 <button class="close-button" on:click={closeModal} title="Close">
-                    ✕
+                    <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
             
@@ -258,7 +258,7 @@
                             {#if isSyncing}
                                 <span class="spinner small"></span>
                             {:else}
-                                🔄
+                                <span class="material-symbols-outlined">sync</span>
                             {/if}
                             Sync All
                         </button>
@@ -303,7 +303,7 @@
                                         {#if isSyncing}
                                             <span class="spinner small"></span>
                                         {:else}
-                                            🔄
+                                            <span class="material-symbols-outlined">sync</span>
                                         {/if}
                                     </button>
                                     
@@ -312,7 +312,7 @@
                                         on:click={() => removeCalendar(calendar.url)}
                                         title="Remove this calendar"
                                     >
-                                        🗑️
+                                        <span class="material-symbols-outlined">delete</span>
                                     </button>
                                 </div>
                             </div>
@@ -379,6 +379,10 @@
     .close-button:hover {
         background: #f3f4f6;
         color: #374151;
+    }
+    
+    .close-button .material-symbols-outlined {
+        font-size: 20px;
     }
     
     .message {
@@ -500,6 +504,10 @@
         background: #e5e7eb;
     }
     
+    .sync-all-button .material-symbols-outlined {
+        font-size: 14px;
+    }
+    
     .loading {
         display: flex;
         align-items: center;
@@ -595,6 +603,11 @@
     .remove-button:hover {
         background: #fef2f2;
         border-color: #f87171;
+    }
+    
+    .sync-button .material-symbols-outlined,
+    .remove-button .material-symbols-outlined {
+        font-size: 16px;
     }
     
     .spinner {
