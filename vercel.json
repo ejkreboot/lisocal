@@ -1,0 +1,11 @@
+{
+	"buildCommand": "npm run build",
+	"devCommand": "npm run dev",
+	"installCommand": "npm install",
+	"framework": "sveltekit",
+	"functions": {
+		"src/routes/api/*/+server.ts": {
+			"maxDuration": 30
+		}
+	}
+}
