@@ -101,11 +101,16 @@
 </script>
 
 {#if isOpen}
-    <!-- svelte-ignore a11y-click-events-have-key-events -->
-    <!-- svelte-ignore a11y-no-static-element-interactions -->
-    <div class="dialog-overlay" on:click={closeDialog} role="dialog" aria-modal="true">
+    <div 
+        class="dialog-overlay" 
+        on:click={closeDialog} 
+        on:keydown={(e) => e.key === 'Escape' && closeDialog()}
+        role="dialog" 
+        aria-modal="true"
+        tabindex="-1"
+    >
         <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <!-- svelte-ignore a11y-no-static-element-interactions -->
+        <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
         <div class="dialog-content" on:click|stopPropagation role="document">
             <div class="dialog-header">
                 <h3>Share Calendar</h3>

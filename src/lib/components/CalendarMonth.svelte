@@ -2,6 +2,8 @@
     import { getCalendarGrid, formatTimeForDisplay, parseEventInput, formatDateForDb, type CalendarEvent, type CalendarDay } from '$lib/calendar-utils.js'
     import { supabase } from '$lib/supabase.js'
     import { onMount, createEventDispatcher } from 'svelte'
+    import { browser } from '$app/environment'
+    import { getExternalCalendarColor } from '$lib/external-calendar-colors.js'
     
     export let year: number
     export let month: number
@@ -21,7 +23,10 @@
     // Reactive statement to update grid when year/month changes
     $: {
         calendarGrid = getCalendarGrid(year, month)
-        loadEvents()
+        // Only load events on client side
+        if (browser) {
+            loadEvents()
+        }
     }
     
     onMount(() => {
@@ -71,7 +76,7 @@
             return
         }
         
-        events = (data || []).map(event => ({
+        events = (data || []).map((event: any) => ({
             id: event.id,
             title: event.title,
             description: event.description,
@@ -79,7 +84,10 @@
             endDate: event.end_date,
             startTime: event.start_time,
             endTime: event.end_time,
-            isAllDay: event.is_all_day
+            isAllDay: event.is_all_day,
+            externalId: event.external_id,
+            externalCalendarUrl: event.external_calendar_url,
+            isExternal: !!event.external_id
         }))
         
         // Distribute events to calendar days
@@ -333,25 +341,35 @@
         }
         return timeStr
     }
+    
+    function getEventStyle(event: CalendarEvent): string {
+        if (event.isExternal && event.externalCalendarUrl) {
+            const colors = getExternalCalendarColor(event.externalCalendarUrl)
+            return `background-color: ${colors.bg}; color: ${colors.text}; border-left: 3px solid ${colors.bg};`
+        }
+        return ''
+    }
 </script>
 
 <!-- Desktop View -->
-<div class="calendar-grid desktop-view">
+<div class="calendar-grid desktop-view" role="grid" aria-label="Calendar grid for {new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}">
     <!-- Header with day names -->
-    <div class="calendar-header">
-        <div class="day-header">Sun</div>
-        <div class="day-header">Mon</div>
-        <div class="day-header">Tue</div>
-        <div class="day-header">Wed</div>
-        <div class="day-header">Thu</div>
-        <div class="day-header">Fri</div>
-        <div class="day-header">Sat</div>
+    <div class="calendar-header" role="rowgroup">
+        <div role="row">
+            <div class="day-header" role="columnheader">Sun</div>
+            <div class="day-header" role="columnheader">Mon</div>
+            <div class="day-header" role="columnheader">Tue</div>
+            <div class="day-header" role="columnheader">Wed</div>
+            <div class="day-header" role="columnheader">Thu</div>
+            <div class="day-header" role="columnheader">Fri</div>
+            <div class="day-header" role="columnheader">Sat</div>
+        </div>
     </div>
     
     <!-- Calendar body -->
-    <div class="calendar-body">
+    <div class="calendar-body" role="rowgroup">
         {#each Array(6) as _, row}
-            <div class="calendar-row">
+            <div class="calendar-row" role="row">
                 {#each Array(7) as _, col}
                     {@const dayIndex = row * 7 + col}
                     {@const day = calendarGrid[dayIndex]}
@@ -361,27 +379,53 @@
                             class:other-month={!day.isCurrentMonth}
                             class:today={day.isToday}
                             class:editing={editingCell?.row === row && editingCell?.col === col}
+                            role="gridcell"
+                            aria-label="{day.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}{day.events.length > 0 ? `, ${day.events.length} event${day.events.length === 1 ? '' : 's'}` : ', no events'}{canEdit ? ', click to add event' : ''}"
+                            aria-selected={day.isToday}
+                            tabindex={canEdit ? 0 : undefined}
                             on:click={() => canEdit && startEditing(row, col)}
                             on:keydown={(e) => canEdit && !editingCell && handleDayKeydown(e, row, col)}
-                            tabindex={canEdit ? 0 : -1}
                         >
                             <div class="day-number">{day.dayNumber}</div>
                             
                             <div class="events">
                                 {#each day.events as event}
-                                    <div class="event" class:all-day={event.isAllDay} class:editing-event={editingEventId === event.id}>
-                                        <div class="event-content" on:click|stopPropagation={() => canEdit && startEditingEvent(event, row, col)}>
+                                    <div class="event" class:all-day={event.isAllDay} class:editing-event={editingEventId === event.id} class:external={event.isExternal} style={getEventStyle(event)}>
+                                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                        <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+                                        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                        <div 
+                                            class="event-content" 
+                                            role={canEdit ? "button" : undefined}
+                                            tabindex={canEdit ? 0 : undefined}
+                                            aria-label="{event.isAllDay ? 'All day event' : formatEventTime(event)}: {event.title}{event.isExternal ? ' (imported from external calendar)' : ''}{canEdit ? ', click to edit' : ''}"
+                                            on:click|stopPropagation={() => canEdit && startEditingEvent(event, row, col)}
+                                            on:keydown={(e) => {
+                                                if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+                                                    e.preventDefault();
+                                                    startEditingEvent(event, row, col);
+                                                }
+                                            }}
+                                        >
                                             {#if !event.isAllDay && event.startTime}
                                                 <div class="event-time">{formatEventTime(event)}</div>
                                             {/if}
                                             <div class="event-title">{event.title}</div>
                                         </div>
                                         {#if canEdit}
-                                            <button 
-                                                class="delete-event"
-                                                on:click|stopPropagation={() => deleteEvent(event.id)}
-                                                title="Delete event"
-                                            >×</button>
+                                            {#if event.isExternal}
+                                                <span 
+                                                    class="external-indicator material-symbols-outlined"
+                                                    title="Imported from external calendar"
+                                                >captive_portal</span>
+                                            {:else}
+                                                <button 
+                                                    class="delete-event"
+                                                    on:click|stopPropagation={() => deleteEvent(event.id)}
+                                                    aria-label="Delete event: {event.title}"
+                                                    title="Delete event"
+                                                >×</button>
+                                            {/if}
                                         {/if}
                                     </div>
                                 {/each}
@@ -394,6 +438,7 @@
                                         on:blur={saveEvent}
                                         on:click|stopPropagation
                                         placeholder="8A-9A Meeting or All day event"
+                                        aria-label="Event details for {day.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}. Enter time and title, or just title for all-day event. Press Enter to save, Escape to cancel."
                                     />
                                 {/if}
                             </div>
@@ -406,7 +451,7 @@
 </div>
 
 <!-- Mobile View - Agenda/List Layout -->
-<div class="calendar-agenda mobile-view">
+<div class="calendar-agenda mobile-view" role="list" aria-label="Calendar events for {new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}">
     {#each calendarGrid.filter(day => day.isCurrentMonth) as day, index}
         {@const dayEvents = day.events}
         {@const hasEvents = dayEvents.length > 0}
@@ -417,6 +462,8 @@
             class:today={day.isToday}
             class:has-events={hasEvents}
             class:editing={isEditing}
+            role="listitem"
+            aria-label="{day.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}{dayEvents.length > 0 ? `, ${dayEvents.length} event${dayEvents.length === 1 ? '' : 's'}` : ', no events'}"
         >
             <div class="agenda-date">
                 <div class="agenda-day-number">{day.dayNumber}</div>
@@ -427,11 +474,25 @@
                 {#if dayEvents.length > 0}
                     <div class="agenda-events">
                         {#each dayEvents as event}
+                            <!-- svelte-ignore a11y-click-events-have-key-events -->
+                            <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+                            <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
                             <div 
                                 class="agenda-event" 
                                 class:all-day={event.isAllDay} 
                                 class:editing-event={editingEventId === event.id}
+                                class:external={event.isExternal}
+                                style={getEventStyle(event)}
+                                role={canEdit ? "button" : "listitem"}
+                                tabindex={canEdit ? 0 : undefined}
+                                aria-label="{event.isAllDay ? 'All day event' : formatEventTime(event)}: {event.title}{event.isExternal ? ' (imported from external calendar)' : ''}{canEdit ? ', click to edit' : ''}"
                                 on:click={() => canEdit && startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7)}
+                                on:keydown={(e) => {
+                                    if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
+                                        e.preventDefault();
+                                        startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7);
+                                    }
+                                }}
                             >
                                 <div class="agenda-event-content">
                                     {#if !event.isAllDay && event.startTime}
@@ -440,11 +501,19 @@
                                     <div class="agenda-event-title">{event.title}</div>
                                 </div>
                                 {#if canEdit}
-                                    <button 
-                                        class="agenda-delete-event"
-                                        on:click|stopPropagation={() => deleteEvent(event.id)}
-                                        title="Delete event"
-                                    >×</button>
+                                    {#if event.isExternal}
+                                        <span 
+                                            class="agenda-external-indicator material-symbols-outlined"
+                                            title="Imported from external calendar"
+                                        >captive_portal</span>
+                                    {:else}
+                                        <button 
+                                            class="agenda-delete-event"
+                                            on:click|stopPropagation={() => deleteEvent(event.id)}
+                                            aria-label="Delete event: {event.title}"
+                                            title="Delete event"
+                                        >×</button>
+                                    {/if}
                                 {/if}
                             </div>
                         {/each}
@@ -455,6 +524,7 @@
                             <button 
                                 class="agenda-add-event"
                                 on:click={() => startEditing(Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7)}
+                                aria-label="Add event for {day.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}"
                             >
                                 + Add Event
                             </button>
@@ -473,6 +543,7 @@
                             on:blur={saveEvent}
                             on:click|stopPropagation
                             placeholder="8A-9A Meeting or All day event"
+                            aria-label="Event details for {day.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}. Enter time and title, or just title for all-day event. Press Enter to save, Escape to cancel."
                         />
                     </div>
                 {/if}
@@ -492,10 +563,13 @@
     }
     
     .calendar-header {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
         background: #f5f5f5;
         border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .calendar-header [role="row"] {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
     }
     
     .day-header {
@@ -581,6 +655,8 @@
         background: #faa336;
     }
     
+
+    
     .event.editing-event {
         background: #ff9800;
         box-shadow: 0 0 0 2px #ff9800;
@@ -590,6 +666,15 @@
         cursor: pointer;
         flex: 1;
         min-width: 0;
+        /* Reset button styles when used as button */
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        font: inherit;
+        color: inherit;
+        text-align: left;
+        width: 100%;
     }
     
     .event-time {
@@ -621,6 +706,18 @@
     
     .delete-event:hover {
         opacity: 1;
+    }
+    
+    .external-indicator {
+        color: white;
+        margin-left: 4px;
+        font-size: 12px;
+        font-weight: normal;
+        opacity: 0.9;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        transform: rotate(0deg);
     }
     
     .event-input {
@@ -728,6 +825,12 @@
         justify-content: space-between;
         cursor: pointer;
         transition: background-color 0.2s;
+        /* Reset button styles when used as button */
+        border: none;
+        margin: 0;
+        font: inherit;
+        text-align: left;
+        width: 100%;
     }
     
     .agenda-event:hover {
@@ -740,6 +843,13 @@
     
     .agenda-event.all-day:hover {
         background: #f57c00;
+    }
+    
+
+    
+    .agenda-event.external:hover {
+        /* Slightly darken the color on hover for external events */
+        filter: brightness(0.9);
     }
     
     .agenda-event.editing-event {
@@ -785,6 +895,19 @@
     .agenda-delete-event:hover {
         opacity: 1;
         background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .agenda-external-indicator {
+        color: white;
+        margin-left: 8px;
+        font-size: 16px;
+        font-weight: normal;
+        opacity: 0.9;
+        flex-shrink: 0;
+        padding: 4px 8px;
+        display: inline-flex;
+        align-items: center;
+        border-radius: 4px;
     }
     
     .agenda-empty {

@@ -33,6 +33,8 @@ CREATE TABLE IF NOT EXISTS public.events (
     start_time TIME,
     end_time TIME,
     is_all_day BOOLEAN DEFAULT false NOT NULL,
+    external_id TEXT, -- UID from imported ICS events (null for user-created events)
+    external_calendar_url TEXT, -- URL of the external calendar this event came from
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -51,6 +53,8 @@ CREATE TABLE IF NOT EXISTS public.shared_links (
 CREATE INDEX IF NOT EXISTS idx_calendars_user_id ON public.calendars(user_id);
 CREATE INDEX IF NOT EXISTS idx_events_calendar_id ON public.events(calendar_id);
 CREATE INDEX IF NOT EXISTS idx_events_start_date ON public.events(start_date);
+CREATE INDEX IF NOT EXISTS idx_events_external_id ON public.events(external_id) WHERE external_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_events_external_url ON public.events(external_calendar_url) WHERE external_calendar_url IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_shared_links_token ON public.shared_links(share_token);
 CREATE INDEX IF NOT EXISTS idx_shared_links_calendar_id ON public.shared_links(calendar_id);
 

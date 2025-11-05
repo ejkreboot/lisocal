@@ -27,17 +27,30 @@ export const handle: Handle = async ({ event, resolve }) => {
     // Fetch and validate the current user from Supabase (more secure than getSession)
     let user = null
     let session = null
-    const { data: { user: authenticatedUser }, error: userError } = await supabase.auth.getUser()
+    
+    try {
+        const { data: { user: authenticatedUser }, error: userError } = await supabase.auth.getUser()
 
-    if (userError) {
-        console.error('Error fetching Supabase user:', userError)
-    }
-
-    if (authenticatedUser) {
-        user = authenticatedUser
-        // Get the session after we've validated the user
-        const { data: { session: validSession } } = await supabase.auth.getSession()
-        session = validSession
+        if (userError) {
+            // Handle expected auth errors silently (no session/token)
+            if (userError.message?.includes('Auth session missing') || userError.code === 'session_not_found') {
+                // This is expected when user is not logged in, no need to log
+            } else {
+                console.error('Error fetching Supabase user:', userError)
+            }
+        } else if (authenticatedUser) {
+            user = authenticatedUser
+            // Get the session after we've validated the user
+            const { data: { session: validSession } } = await supabase.auth.getSession()
+            session = validSession
+        }
+    } catch (error: any) {
+        // Catch AuthSessionMissingError and other auth-related errors
+        if (error.__isAuthError || error.message?.includes('Auth session missing')) {
+            // This is expected when user is not logged in, no need to log
+        } else {
+            console.error('Unexpected error in auth check:', error)
+        }
     }
 
     // Check for shared link token in URL when no authenticated user present

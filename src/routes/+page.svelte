@@ -3,6 +3,7 @@
     import { getMonthName } from '$lib/calendar-utils.js'
     import CalendarMonth from '$lib/components/CalendarMonth.svelte'
     import ShareDialog from '$lib/components/ShareDialog.svelte'
+    import ExternalCalendarModal from '$lib/components/ExternalCalendarModal.svelte'
     import { user, session, loading, signOut } from '$lib/auth.js'
     import { supabase } from '$lib/supabase.js'
     
@@ -10,6 +11,7 @@
     
     let userCalendar: any = null
     let showShareDialog = false
+    let showExternalCalendarModal = false
     let editingTitle = false
     let titleInput = ''
     
@@ -202,6 +204,13 @@
             {:else if !$user && !data.sharedCalendar}
                 <a href="/auth" class="login-button">Sign In</a>
             {:else if $user}
+                <button 
+                    on:click={() => showExternalCalendarModal = true} 
+                    class="external-cal-button icon-button"
+                    title="External Calendars"
+                >
+                    <span class="material-symbols-outlined" style="font-size: 16px;">captive_portal</span>
+                </button>
                 <button on:click={() => showShareDialog = true} class="share-button" disabled={!userCalendar?.id}>
                     Share
                 </button>
@@ -247,6 +256,12 @@
     on:close={() => showShareDialog = false}
 />
 
+<ExternalCalendarModal 
+    bind:showModal={showExternalCalendarModal}
+    on:close={() => showExternalCalendarModal = false}
+    on:calendarsChanged={() => location.reload()}
+/>
+
 <style>
     :global(body) {
         margin: 0;
@@ -290,7 +305,7 @@
         object-fit: contain;
     }
     
-    .shared-calendar-info, .calendar-info {
+    .shared-calendar-info {
         margin-top: 4px;
     }
     
@@ -345,11 +360,7 @@
         font-size: 12px;
     }
     
-    .user-info {
-        color: #666;
-        font-size: 14px;
-        margin-top: 4px;
-    }
+
     
     .header-center {
         display: flex;
@@ -447,6 +458,38 @@
     .share-button:disabled {
         background: #ccc;
         cursor: not-allowed;
+    }
+    
+    .icon-button {
+        background: #f5f5f5;
+        color: #666;
+        border: none;
+        padding: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-right: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+    
+    .external-cal-button {
+        background: #4caf50;
+        color: white;
+    }
+    
+    .external-cal-button:hover {
+        background: #45a049;
+    }
+    
+    .icon-button:hover {
+        background: #e5e5e5;
+    }
+    
+    .external-cal-button:hover {
+        background: #45a049;
     }
     
     .logout-button {

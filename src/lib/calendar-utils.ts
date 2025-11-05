@@ -11,6 +11,9 @@ export interface CalendarEvent {
     startTime?: string
     endTime?: string
     isAllDay: boolean
+    externalId?: string // UID from external ICS calendar
+    externalCalendarUrl?: string // URL of external calendar
+    isExternal?: boolean // Helper flag to identify external events
 }
 
 export interface CalendarDay {
