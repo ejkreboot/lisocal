@@ -97,7 +97,6 @@ export const handle: Handle = async ({ event, resolve }) => {
     event.locals.user = user
     event.locals.session = session ?? null
     event.locals.sharedCalendar = sharedCalendar
-    console.log('User:', user  ?? 'No authenticated user');
 
     return resolve(event, {
         filterSerializedResponseHeaders: (name) => name === 'content-range'

@@ -46,20 +46,17 @@
 <div class="calendar-container">
     <header class="calendar-header">
         <div class="header-left">
-            <h1>Calendgnar</h1>
+            <div class="logo-title">
+                <img src="/logo-navbar.png" alt="Calendgnar logo" class="navbar-logo" />
+                <h1>Calendgnar</h1>
+            </div>
             <div class="shared-calendar-info">
                 <div class="calendar-title-row">
                     <span class="calendar-name">{data.sharedCalendar?.name || 'Shared Calendar'}</span>
-                    <span class="permission-badge" class:edit={data.sharedCalendar?.permissions === 'edit'}>
-                        {data.sharedCalendar?.permissions || 'view'}
-                    </span>
-                </div>
-                {#if data.sharedCalendar?.ownerEmail}
-                    <div class="owner-info">
-                        <span class="owner-label">Shared by</span>
+                    {#if data.sharedCalendar?.ownerEmail}
                         <span class="owner-email">{data.sharedCalendar.ownerEmail}</span>
-                    </div>
-                {/if}
+                    {/if}
+                </div>
             </div>
         </div>
         
@@ -127,10 +124,19 @@
         font-weight: 700;
     }
     
-    .shared-calendar-info {
+    .logo-title {
         display: flex;
-        flex-direction: column;
-        gap: 4px;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .navbar-logo {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+    }
+    
+    .shared-calendar-info {
         margin-top: 4px;
     }
     
@@ -145,18 +151,6 @@
         color: #333;
     }
     
-    .owner-info {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 13px;
-    }
-    
-    .owner-label {
-        color: #666;
-        font-weight: 500;
-    }
-    
     .owner-email {
         color: #2196f3;
         font-weight: 500;
@@ -164,20 +158,6 @@
         padding: 2px 8px;
         border-radius: 12px;
         font-size: 12px;
-    }
-    
-    .permission-badge {
-        background: #e0e0e0;
-        color: #666;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        text-transform: uppercase;
-    }
-    
-    .permission-badge.edit {
-        background: #4caf50;
-        color: white;
     }
     
     .header-center {

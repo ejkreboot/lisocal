@@ -335,7 +335,8 @@
     }
 </script>
 
-<div class="calendar-grid">
+<!-- Desktop View -->
+<div class="calendar-grid desktop-view">
     <!-- Header with day names -->
     <div class="calendar-header">
         <div class="day-header">Sun</div>
@@ -404,9 +405,86 @@
     </div>
 </div>
 
+<!-- Mobile View - Agenda/List Layout -->
+<div class="calendar-agenda mobile-view">
+    {#each calendarGrid.filter(day => day.isCurrentMonth) as day, index}
+        {@const dayEvents = day.events}
+        {@const hasEvents = dayEvents.length > 0}
+        {@const isEditing = editingCell && (editingCell.row * 7 + editingCell.col) === calendarGrid.indexOf(day)}
+        
+        <div 
+            class="agenda-day" 
+            class:today={day.isToday}
+            class:has-events={hasEvents}
+            class:editing={isEditing}
+        >
+            <div class="agenda-date">
+                <div class="agenda-day-number">{day.dayNumber}</div>
+                <div class="agenda-day-name">{new Date(day.date).toLocaleDateString('en', { weekday: 'short' })}</div>
+            </div>
+            
+            <div class="agenda-content">
+                {#if dayEvents.length > 0}
+                    <div class="agenda-events">
+                        {#each dayEvents as event}
+                            <div 
+                                class="agenda-event" 
+                                class:all-day={event.isAllDay} 
+                                class:editing-event={editingEventId === event.id}
+                                on:click={() => canEdit && startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7)}
+                            >
+                                <div class="agenda-event-content">
+                                    {#if !event.isAllDay && event.startTime}
+                                        <div class="agenda-event-time">{formatEventTime(event)}</div>
+                                    {/if}
+                                    <div class="agenda-event-title">{event.title}</div>
+                                </div>
+                                {#if canEdit}
+                                    <button 
+                                        class="agenda-delete-event"
+                                        on:click|stopPropagation={() => deleteEvent(event.id)}
+                                        title="Delete event"
+                                    >×</button>
+                                {/if}
+                            </div>
+                        {/each}
+                    </div>
+                {:else}
+                    <div class="agenda-empty">
+                        {#if canEdit}
+                            <button 
+                                class="agenda-add-event"
+                                on:click={() => startEditing(Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7)}
+                            >
+                                + Add Event
+                            </button>
+                        {:else}
+                            <span class="no-events">No events</span>
+                        {/if}
+                    </div>
+                {/if}
+                
+                {#if isEditing}
+                    <div class="agenda-input-container">
+                        <input 
+                            class="agenda-event-input"
+                            bind:value={editText}
+                            on:keydown={handleKeydown}
+                            on:blur={saveEvent}
+                            on:click|stopPropagation
+                            placeholder="8A-9A Meeting or All day event"
+                        />
+                    </div>
+                {/if}
+            </div>
+        </div>
+    {/each}
+</div>
+
 <style>
     .calendar-grid {
         width: 100%;
+        min-width: 980px;
         border: 1px solid #e0e0e0;
         border-radius: 8px;
         overflow: hidden;
@@ -439,7 +517,8 @@
     }
     
     .calendar-day {
-        min-height: 120px;
+        min-height: 100px;
+        min-width: 140px;
         border-right: 1px solid #e0e0e0;
         border-bottom: 1px solid #e0e0e0;
         padding: 8px;
@@ -561,5 +640,226 @@
     .event-input::placeholder {
         color: #999;
         font-size: 11px;
+    }
+    
+    /* Mobile View Styles */
+    .mobile-view {
+        display: none;
+    }
+    
+    .calendar-agenda {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .agenda-day {
+        display: flex;
+        border-bottom: 1px solid #f0f0f0;
+        min-height: 60px;
+        transition: background-color 0.2s;
+    }
+    
+    .agenda-day:last-child {
+        border-bottom: none;
+    }
+    
+    .agenda-day.today {
+        background: #e3f2fd;
+    }
+    
+    .agenda-day.editing {
+        background: #f0f8ff;
+    }
+    
+    .agenda-date {
+        flex-shrink: 0;
+        width: 60px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 8px;
+        background: #f8f9fa;
+        border-right: 1px solid #e0e0e0;
+    }
+    
+    .agenda-day.today .agenda-date {
+        background: #2196f3;
+        color: white;
+    }
+    
+    .agenda-day-number {
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1;
+    }
+    
+    .agenda-day-name {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-top: 2px;
+        opacity: 0.8;
+    }
+    
+    .agenda-content {
+        flex: 1;
+        padding: 12px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .agenda-events {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    
+    .agenda-event {
+        background: #2196f3;
+        color: white;
+        border-radius: 6px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .agenda-event:hover {
+        background: #1976d2;
+    }
+    
+    .agenda-event.all-day {
+        background: #ff9800;
+    }
+    
+    .agenda-event.all-day:hover {
+        background: #f57c00;
+    }
+    
+    .agenda-event.editing-event {
+        background: #ff9800;
+        box-shadow: 0 0 0 2px #ff9800;
+    }
+    
+    .agenda-event-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .agenda-event-time {
+        font-size: 12px;
+        font-weight: 600;
+        opacity: 0.9;
+        margin-bottom: 2px;
+    }
+    
+    .agenda-event-title {
+        font-size: 14px;
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .agenda-delete-event {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        padding: 4px 8px;
+        margin-left: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+        flex-shrink: 0;
+        border-radius: 4px;
+    }
+    
+    .agenda-delete-event:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .agenda-empty {
+        display: flex;
+        align-items: center;
+    }
+    
+    .agenda-add-event {
+        background: none;
+        border: 2px dashed #ddd;
+        color: #666;
+        border-radius: 6px;
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+        width: 100%;
+    }
+    
+    .agenda-add-event:hover {
+        border-color: #2196f3;
+        color: #2196f3;
+        background: #f0f8ff;
+    }
+    
+    .no-events {
+        color: #999;
+        font-size: 14px;
+        font-style: italic;
+    }
+    
+    .agenda-input-container {
+        margin-top: 8px;
+    }
+    
+    .agenda-event-input {
+        width: 100%;
+        border: 2px solid #2196f3;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 14px;
+        background: white;
+        outline: none;
+        box-sizing: border-box;
+    }
+    
+    .agenda-event-input::placeholder {
+        color: #999;
+        font-size: 13px;
+    }
+    
+    /* Responsive Breakpoint */
+    @media (max-width: 768px) {
+        .desktop-view {
+            display: none;
+        }
+        
+        .mobile-view {
+            display: block;
+        }
+        
+        /* Reset min-width for mobile */
+        .calendar-grid {
+            min-width: auto;
+        }
+        
+        .calendar-day {
+            min-width: auto;
+        }
+    }
+    
+    /* Desktop-only styles for consistent sizing */
+    @media (min-width: 769px) {
+        .calendar-grid.desktop-view {
+            overflow-x: auto;
+        }
     }
 </style>

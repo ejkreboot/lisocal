@@ -10,6 +10,8 @@
     
     let userCalendar: any = null
     let showShareDialog = false
+    let editingTitle = false
+    let titleInput = ''
     
     // Load user's calendar when they sign in
     $: if ($user && $session) {
@@ -46,6 +48,65 @@
     async function handleSignOut() {
         await signOut()
         userCalendar = null
+    }
+    
+    function startEditingTitle() {
+        if (!$user || !userCalendar) return
+        editingTitle = true
+        titleInput = userCalendar.name
+        setTimeout(() => {
+            const input = document.querySelector('.title-input') as HTMLInputElement
+            if (input) {
+                input.focus()
+                input.select()
+            }
+        }, 0)
+    }
+    
+    async function saveTitle() {
+        if (!$user || !userCalendar || !titleInput.trim()) {
+            cancelEditingTitle()
+            return
+        }
+        
+        try {
+            const response = await fetch('/api/calendar/title', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    calendarId: userCalendar.id,
+                    name: titleInput.trim()
+                })
+            })
+            
+            if (response.ok) {
+                userCalendar.name = titleInput.trim()
+                editingTitle = false
+            } else {
+                console.error('Failed to update calendar title')
+                cancelEditingTitle()
+            }
+        } catch (error) {
+            console.error('Error updating calendar title:', error)
+            cancelEditingTitle()
+        }
+    }
+    
+    function cancelEditingTitle() {
+        editingTitle = false
+        titleInput = ''
+    }
+    
+    function handleTitleKeydown(event: KeyboardEvent) {
+        if (event.key === 'Enter') {
+            event.preventDefault()
+            saveTitle()
+        } else if (event.key === 'Escape') {
+            event.preventDefault()
+            cancelEditingTitle()
+        }
     }
     
     let currentDate = new Date()
@@ -97,20 +158,31 @@
                 <div class="shared-calendar-info">
                     <div class="calendar-title-row">
                         <span class="calendar-name">{data.sharedCalendar.name}</span>
-                        <span class="permission-badge" class:edit={data.sharedCalendar.permissions === 'edit'}>
-                            {data.sharedCalendar.permissions}
-                        </span>
-                    </div>
-                    {#if data.sharedCalendar.ownerEmail}
-                        <div class="owner-info">
-                            <span class="owner-label">Shared by</span>
+                        {#if data.sharedCalendar.ownerEmail}
                             <span class="owner-email">{data.sharedCalendar.ownerEmail}</span>
-                        </div>
-                    {/if}
+                        {/if}
+                    </div>
                 </div>
-            {:else if $user}
-                <div class="user-info">
-                    Welcome back, {$user.email}
+            {:else if $user && userCalendar}
+                <div class="shared-calendar-info">
+                    <div class="calendar-title-row">
+                        {#if editingTitle}
+                            <input 
+                                class="title-input"
+                                bind:value={titleInput}
+                                on:keydown={handleTitleKeydown}
+                                on:blur={saveTitle}
+                                placeholder="Calendar Name"
+                            />
+                        {:else}
+                            <button class="calendar-name-button" on:click={startEditingTitle} title="Click to edit calendar name">
+                                {userCalendar.name}
+                            </button>
+                        {/if}
+                        {#if $user?.email}
+                            <span class="owner-email">{$user.email}</span>
+                        {/if}
+                    </div>
                 </div>
             {/if}
         </div>
@@ -218,10 +290,7 @@
         object-fit: contain;
     }
     
-    .shared-calendar-info {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
+    .shared-calendar-info, .calendar-info {
         margin-top: 4px;
     }
     
@@ -236,16 +305,35 @@
         color: #333;
     }
     
-    .owner-info {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 13px;
+    .calendar-name-button {
+        background: none;
+        border: none;
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s;
+        font-family: inherit;
     }
     
-    .owner-label {
-        color: #666;
-        font-weight: 500;
+    .calendar-name-button:hover {
+        background: #f0f0f0;
+        color: #2196f3;
+    }
+    
+    .title-input {
+        font-weight: 600;
+        color: #333;
+        font-size: 14px;
+        border: 2px solid #2196f3;
+        border-radius: 4px;
+        padding: 4px 8px;
+        background: white;
+        outline: none;
+        font-family: inherit;
+        min-width: 150px;
     }
     
     .owner-email {
@@ -255,20 +343,6 @@
         padding: 2px 8px;
         border-radius: 12px;
         font-size: 12px;
-    }
-    
-    .permission-badge {
-        background: #e0e0e0;
-        color: #666;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        text-transform: uppercase;
-    }
-    
-    .permission-badge.edit {
-        background: #4caf50;
-        color: white;
     }
     
     .user-info {
