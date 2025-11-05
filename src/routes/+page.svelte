@@ -323,6 +323,7 @@
         align-items: center;
         flex-wrap: wrap;
         gap: 16px;
+        position: relative;
     }
     
     .header-left h1 {
@@ -361,14 +362,14 @@
     
     .calendar-name {
         font-weight: 600;
-        color: #333;
+        color: #f47109;
     }
     
     .calendar-name-button {
         background: none;
         border: none;
         font-weight: 600;
-        color: #333;
+        color: #f47109;
         font-size: 14px;
         cursor: pointer;
         padding: 4px 8px;
@@ -379,7 +380,7 @@
     
     .calendar-name-button:hover {
         background: #f0f0f0;
-        color: #2196f3;
+        color: #e5640a;
     }
     
     .title-input {
@@ -410,6 +411,11 @@
         display: flex;
         align-items: center;
         gap: 16px;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        top: 50%;
+        transform: translate(-50%, -50%);
     }
     
     .month-navigation {
@@ -616,10 +622,14 @@
         .calendar-header {
             flex-direction: column;
             align-items: stretch;
+            padding: 16px 24px 80px 24px;
         }
         
         .header-center {
+            position: static;
+            transform: none;
             justify-content: center;
+            margin: 16px 0;
         }
         
         .header-right {
