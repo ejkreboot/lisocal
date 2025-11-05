@@ -4,6 +4,7 @@
     import CalendarMonth from '$lib/components/CalendarMonth.svelte'
     import ShareDialog from '$lib/components/ShareDialog.svelte'
     import ExternalCalendarModal from '$lib/components/ExternalCalendarModal.svelte'
+    import TodoModal from '$lib/components/TodoModal.svelte'
     import { user, session, loading, signOut } from '$lib/auth.js'
     import { supabase } from '$lib/supabase.js'
     
@@ -12,6 +13,7 @@
     let userCalendar: any = null
     let showShareDialog = false
     let showExternalCalendarModal = false
+    let showTodoModal = false
     let editingTitle = false
     let titleInput = ''
     
@@ -203,18 +205,27 @@
                 <div class="loading-spinner">Loading...</div>
             {:else if !$user && !data.sharedCalendar}
                 <a href="/auth" class="login-button">Sign In</a>
-            {:else if $user}
+            {:else if $user || data.sharedCalendar}
                 <button 
-                    on:click={() => showExternalCalendarModal = true} 
-                    class="external-cal-button icon-button"
-                    title="External Calendars"
+                    on:click={() => showTodoModal = true} 
+                    class="todo-button icon-button"
+                    title="To-Do List"
                 >
-                    <span class="material-symbols-outlined" style="font-size: 16px;">captive_portal</span>
+                    <span class="material-symbols-outlined" style="font-size: 16px;">task_alt</span>
                 </button>
-                <button on:click={() => showShareDialog = true} class="share-button" disabled={!userCalendar?.id}>
-                    Share
-                </button>
-                <button on:click={handleSignOut} class="logout-button">Sign Out</button>
+                {#if $user}
+                    <button 
+                        on:click={() => showExternalCalendarModal = true} 
+                        class="external-cal-button icon-button"
+                        title="External Calendars"
+                    >
+                        <span class="material-symbols-outlined" style="font-size: 16px;">captive_portal</span>
+                    </button>
+                    <button on:click={() => showShareDialog = true} class="share-button" disabled={!userCalendar?.id}>
+                        Share
+                    </button>
+                    <button on:click={handleSignOut} class="logout-button">Sign Out</button>
+                {/if}
             {/if}
         </div>
     </header>
@@ -260,6 +271,14 @@
     bind:showModal={showExternalCalendarModal}
     on:close={() => showExternalCalendarModal = false}
     on:calendarsChanged={() => location.reload()}
+/>
+
+<TodoModal 
+    bind:isOpen={showTodoModal}
+    {canEdit}
+    calendarId={calendarId || ''}
+    shareToken={data.sharedCalendar?.shareToken || null}
+    on:close={() => showTodoModal = false}
 />
 
 <style>
@@ -475,6 +494,15 @@
         font-size: 14px;
     }
     
+    .todo-button {
+        background: #9c27b0;
+        color: white;
+    }
+    
+    .todo-button:hover {
+        background: #7b1fa2;
+    }
+    
     .external-cal-button {
         background: #4caf50;
         color: white;
@@ -486,6 +514,10 @@
     
     .icon-button:hover {
         background: #e5e5e5;
+    }
+    
+    .todo-button:hover {
+        background: #7b1fa2;
     }
     
     .external-cal-button:hover {
