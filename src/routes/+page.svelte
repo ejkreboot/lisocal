@@ -254,14 +254,13 @@
             />
         {:else}
             <div class="no-calendar">
-                <h2>Setting up your calendar...</h2>
-                <p>
+                <h2>
                     {#if $user}
                         Creating your default calendar...
                     {:else}
                         Get started by signing in to access your calendar.
                     {/if}
-                </p>
+                </h2><br>
                 {#if !$user}
                     <a href="/auth" class="cta-button">Sign In</a>
                 {/if}
@@ -293,7 +292,7 @@
 <style>
     :global(body) {
         margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: "DM Sans";
         background: #f8f9fa;
     }
 
@@ -611,8 +610,8 @@
         color: #333;
         margin-bottom: 16px;
     }
-    
-    .no-calendar p {
+
+    :global(.no-calendar p) { 
         color: #666;
         margin-bottom: 24px;
         font-size: 16px;

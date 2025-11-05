@@ -94,3 +94,54 @@ export const GET: RequestHandler = async ({ locals }) => {
         }))
     })
 }
+
+export const DELETE: RequestHandler = async ({ request, locals }) => {
+    if (!locals.user) {
+        throw error(401, 'Unauthorized')
+    }
+    
+    const { shareToken } = await request.json()
+    
+    if (!shareToken) {
+        throw error(400, 'Share token is required')
+    }
+    
+    // First, get the shared link and verify ownership
+    const { data: sharedLink, error: linkError } = await supabaseAdmin
+        .from('shared_links')
+        .select('id, calendar_id')
+        .eq('share_token', shareToken)
+        .single()
+    
+    if (linkError || !sharedLink) {
+        throw error(404, 'Shared link not found')
+    }
+    
+    // Verify user owns the calendar
+    const { data: calendar, error: calendarError } = await supabaseAdmin
+        .from('calendars')
+        .select('user_id')
+        .eq('id', sharedLink.calendar_id)
+        .single()
+    
+    if (calendarError || !calendar) {
+        throw error(404, 'Calendar not found')
+    }
+    
+    if (calendar.user_id !== locals.user.id) {
+        throw error(403, 'Access denied')
+    }
+    
+    // Delete the shared link
+    const { error: deleteError } = await supabaseAdmin
+        .from('shared_links')
+        .delete()
+        .eq('id', sharedLink.id)
+    
+    if (deleteError) {
+        console.error('Error deleting shared link:', deleteError)
+        throw error(500, 'Failed to delete shared link')
+    }
+    
+    return json({ success: true })
+}

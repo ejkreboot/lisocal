@@ -59,8 +59,6 @@
             messageType = 'error'
         } else {
             showOtpInput = true
-            message = `We've sent a 6-digit code to ${email}. Enter it below to sign in.`
-            messageType = 'success'
         }
     }
     
@@ -120,7 +118,7 @@
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
-            <h1>lisocal</h1>
+            <h1 class=brand_name>lisocal</h1>
             <p>Sign in to access your calendar</p>
         </div>
         
@@ -202,12 +200,11 @@
         <div class="auth-info">
             <p>
                 {#if !showOtpInput}
-                    We'll send you a 6-digit code to sign in. No passwords needed!
-                    <br>
+                    We'll send you a 6-digit code to sign in.<br> No passwords needed!
+                    <br><br>
                     New to lisocal? Your account will be created automatically.
                 {:else}
-                    Check your email for a 6-digit code and enter it above.
-                    <br>
+                    Check your email for the code and enter it above.
                     The code expires in 10 minutes for security.
                 {/if}
             </p>
@@ -222,8 +219,6 @@
 <style>
     :global(body) {
         margin: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         min-height: 100vh;
     }
     
@@ -267,6 +262,12 @@
     .auth-form {
         padding: 32px;
     }
+
+    .brand_name {
+        font-family: "Dosis";
+        font-weight: 700;
+        color: #646565;
+    }   
     
     .input-group {
         margin-bottom: 24px;

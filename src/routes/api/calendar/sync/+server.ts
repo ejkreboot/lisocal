@@ -213,6 +213,19 @@ export const POST: RequestHandler = async ({ locals, request }) => {
             updatedCount = eventsToImport.length - newEvents.length
         }
 
+        // Update sync metadata
+        await supabaseAdmin
+            .from('external_calendar_sync')
+            .upsert({
+                calendar_id: calendar.id,
+                external_url: url,
+                etag: fetchResult.etag,
+                last_modified: fetchResult.lastModified,
+                last_synced: new Date().toISOString()
+            }, {
+                onConflict: 'calendar_id,external_url'
+            })
+
         return json({
             success: true,
             message: `Sync completed: ${importedCount} new, ${updatedCount} updated, ${deletedCount} deleted`,

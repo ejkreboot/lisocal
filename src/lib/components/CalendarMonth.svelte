@@ -4,6 +4,7 @@
     import { onMount, createEventDispatcher } from 'svelte'
     import { browser } from '$app/environment'
     import { getExternalCalendarColor } from '$lib/external-calendar-colors.js'
+    import { autoSync, type SyncResult } from '$lib/external-calendar-auto-sync.js'
     
     export let year: number
     export let month: number
@@ -44,6 +45,20 @@
     
     async function loadEvents() {
         if (!calendarId) return
+        
+        // Auto-sync external calendars if user is authenticated (not via share link)
+        if (!shareToken && canEdit) {
+            try {
+                const syncResults = await autoSync.checkAndSyncExternalCalendars(calendarId)
+                if (syncResults.some(r => r.hasChanges)) {
+                    console.log('External calendars updated:', syncResults.filter(r => r.hasChanges))
+                    // Could show a subtle notification here if desired
+                }
+            } catch (error) {
+                console.warn('Auto-sync failed:', error)
+                // Don't block calendar loading if sync fails
+            }
+        }
         
         const startDate = formatDateForDb(new Date(year, month, 1))
         const endDate = formatDateForDb(new Date(year, month + 1, 0))

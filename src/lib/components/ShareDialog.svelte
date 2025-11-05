@@ -74,6 +74,42 @@
         }
     }
     
+    async function copyExistingLink(shareUrl: string) {
+        try {
+            await navigator.clipboard.writeText(`${window.location.origin}${shareUrl}`)
+            // Could add a toast notification here
+        } catch (err) {
+            console.error('Error copying to clipboard:', err)
+        }
+    }
+    
+    async function deleteShareLink(shareToken: string) {
+        if (!confirm('Are you sure you want to delete this share link? It will no longer be accessible.')) {
+            return
+        }
+        
+        try {
+            const response = await fetch('/api/share', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ shareToken })
+            })
+            
+            if (!response.ok) {
+                throw new Error('Failed to delete share link')
+            }
+            
+            // Refresh existing links list
+            await loadExistingLinks()
+            
+        } catch (err) {
+            console.error('Error deleting share link:', err)
+            error = 'Failed to delete share link. Please try again.'
+        }
+    }
+    
     function closeDialog() {
         dispatch('close')
         shareUrl = ''
@@ -190,28 +226,44 @@
                         <div class="existing-links">
                             {#each existingLinks as link}
                                 <div class="link-item">
-                                    <div class="link-info">
-                                        <span class="link-permissions" class:edit={link.permissions === 'edit'}>
-                                            {link.permissions}
-                                        </span>
-                                        <span class="link-created">
-                                            Created {formatDate(link.createdAt)}
-                                        </span>
-                                        {#if link.expiresAt}
-                                            <span class="link-expires">
-                                                Expires {formatDate(link.expiresAt)}
-                                            </span>
-                                        {:else}
-                                            <span class="link-never-expires">Never expires</span>
-                                        {/if}
+                                    <div class="link-url" title="{window.location.origin}{link.shareUrl}">
+                                        {window.location.origin}{link.shareUrl}
                                     </div>
-                                    <div class="link-actions">
-                                        <button 
-                                            class="copy-existing-button"
-                                            on:click={() => navigator.clipboard.writeText(`${window.location.origin}${link.shareUrl}`)}
-                                        >
-                                            Copy
-                                        </button>
+                                    <div class="link-details">
+                                        <div class="link-info">
+                                            <span class="link-permissions" class:edit={link.permissions === 'edit'}>
+                                                {link.permissions}
+                                            </span>
+                                            <div class="link-dates">
+                                                <span class="link-created">
+                                                    Created {formatDate(link.createdAt)}
+                                                </span>
+                                                <span class="date-separator">•</span>
+                                                {#if link.expiresAt}
+                                                    <span class="link-expires">
+                                                        Expires {formatDate(link.expiresAt)}
+                                                    </span>
+                                                {:else}
+                                                    <span class="link-never-expires">Never expires</span>
+                                                {/if}
+                                            </div>
+                                        </div>
+                                        <div class="link-actions">
+                                            <button 
+                                                class="copy-existing-button"
+                                                on:click={() => copyExistingLink(link.shareUrl)}
+                                                title="Copy link to clipboard"
+                                            >
+                                                Copy
+                                            </button>
+                                            <button 
+                                                class="delete-link-button"
+                                                on:click={() => deleteShareLink(link.shareToken)}
+                                                title="Delete this share link"
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             {/each}
@@ -428,14 +480,45 @@
         padding: 12px;
         margin-bottom: 8px;
         display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .link-url {
+        font-family: monospace;
+        font-size: 12px;
+        color: #2196f3;
+        background: #f0f8ff;
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid #e3f2fd;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.2s;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    
+    .link-details {
+        display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
     }
     
     .link-info {
         display: flex;
         flex-direction: column;
         gap: 2px;
+        flex: 1;
+        min-width: 0; /* Allows text to wrap properly */
+    }
+    
+    .link-url:hover {
+        background: #e3f2fd;
+        border-color: #bbdefb;
     }
     
     .link-permissions {
@@ -446,6 +529,7 @@
         font-size: 11px;
         text-transform: uppercase;
         width: fit-content;
+        margin-top: 2px;
     }
     
     .link-permissions.edit {
@@ -453,9 +537,25 @@
         color: white;
     }
     
+    .link-dates {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
     .link-created, .link-expires, .link-never-expires {
         font-size: 12px;
         color: #666;
+    }
+    
+    .date-separator {
+        color: #ccc;
+        font-size: 12px;
+    }
+    
+    .link-actions {
+        display: flex;
+        gap: 8px;
     }
     
     .copy-existing-button {
@@ -471,5 +571,20 @@
     
     .copy-existing-button:hover {
         background: #1976d2;
+    }
+    
+    .delete-link-button {
+        background: #f44336;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .delete-link-button:hover {
+        background: #d32f2f;
     }
 </style>
