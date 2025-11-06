@@ -74,6 +74,8 @@
 
     async function handleSignOut() {
         await signOut()
+        // Reload the page to clear calendar and todo list
+        location.reload()
     }
     
     function toggleMobileMenu() {
@@ -84,7 +86,7 @@
         showMobileMenu = false
     }
 
-    let canEdit = $derived( $user || (data.sharedCalendar && data.sharedCalendar.permissions === 'edit'))
+    let canEdit = $derived( $user || (data?.sharedCalendar && data?.sharedCalendar.permissions === 'edit'))
 
 </script>
 
@@ -98,8 +100,8 @@
             </a>
             <!-- Calendar name for mobile (next to icon) -->
             <div class="mobile-calendar-info">
-                {#if data.sharedCalendar}
-                    <span class="calendar-name">{data.sharedCalendar.name}</span>
+                {#if data?.sharedCalendar}
+                    <span class="calendar-name">{data?.sharedCalendar.name}</span>
                 {:else if $user && calendarName}
                     {#if editingTitle}
                         <input 
@@ -119,11 +121,11 @@
         </div>
         
         <div class="header-center">
-            {#if data.sharedCalendar}
+            {#if data?.sharedCalendar}
                 <div class="calendar-info-inline">
-                    <span class="calendar-name">{data.sharedCalendar.name}</span>
-                    {#if data.sharedCalendar.ownerEmail}
-                        <span class="owner-email">{data.sharedCalendar.ownerEmail}</span>
+                    <span class="calendar-name">{data?.sharedCalendar.name}</span>
+                    {#if data?.sharedCalendar.ownerEmail}
+                        <span class="owner-email">{data?.sharedCalendar.ownerEmail}</span>
                     {/if}
                 </div>
             {:else if $user && calendarName}
@@ -151,9 +153,9 @@
         <div class="header-right">
             {#if $loading}
                 <div class="loading-spinner">Loading...</div>
-            {:else if !$user && !data.sharedCalendar}
+            {:else if !$user && !data?.sharedCalendar}
                 <a href="/auth" class="login-button">Sign In</a>
-            {:else if $user || data.sharedCalendar}
+            {:else if $user || data?.sharedCalendar}
                 <!-- Desktop buttons -->
                 <div class="desktop-menu">
                     {#if $user}
@@ -263,7 +265,7 @@
     bind:isOpen={showTodoModal}
     {canEdit}
     calendarId={calendarId || ''}
-    shareToken={data.sharedCalendar?.shareToken || null}
+    shareToken={data?.sharedCalendar?.shareToken || null}
     on:close={() => showTodoModal = false}
 />
 

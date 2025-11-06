@@ -2,6 +2,7 @@
     import { supabase } from '$lib/supabase.js'
     import { goto } from '$app/navigation'
     import { page } from '$app/stores'
+    import Header from '$lib/components/Header.svelte'
     
     let email = ''
     let otpCode = ''
@@ -115,6 +116,7 @@
     <title>Sign In - lisocal</title>
 </svelte:head>
 
+<Header data={null} calendarId="" calendarName=""/>
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
@@ -182,15 +184,7 @@
                     disabled={isLoading || otpCode.length !== 6}
                 >
                     {isLoading ? 'Verifying...' : 'Verify Code'}
-                </button>
-                
-                <button 
-                    class="secondary-button"
-                    on:click={resetForm}
-                    disabled={isLoading}
-                >
-                    Use Different Email
-                </button>
+                </button>                
             {/if}
             
             {#if message}
