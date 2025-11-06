@@ -325,55 +325,21 @@
 {/if}
 
 <style>
-    .modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        padding: 20px;
-    }
-    
+    /* Using global modal styles - customizations only */
     .modal-content {
-        background: white;
-        border-radius: 12px;
-        width: 100%;
         max-width: 600px;
-        max-height: 90vh;
         overflow-y: auto;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        box-shadow: var(--shadow-xl);
     }
     
     .modal-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 24px 24px 0;
-        border-bottom: 1px solid #f0f0f0;
-        margin-bottom: 24px;
+        padding: var(--space-6) var(--space-6) 0;
+        margin-bottom: var(--space-6);
     }
     
     .modal-header h2 {
-        margin: 0;
         font-size: 24px;
-        font-weight: 600;
-        color: #1f2937;
-    }
-    
-    .close-button {
-        background: none;
-        border: none;
-        font-size: 24px;
-        cursor: pointer;
-        color: #6b7280;
-        padding: 4px;
-        border-radius: 4px;
-        transition: all 0.2s;
+        color: var(--gray-800);
     }
     
     .close-button:hover {
@@ -386,26 +352,11 @@
     }
     
     .message {
-        margin: 0 24px 20px;
-        padding: 12px 16px;
-        border-radius: 8px;
-        font-size: 14px;
-    }
-    
-    .message.success {
-        background: #d1fae5;
-        color: #065f46;
-        border: 1px solid #a7f3d0;
-    }
-    
-    .message.error {
-        background: #fee2e2;
-        color: #991b1b;
-        border: 1px solid #fca5a5;
+        margin: 0 var(--space-6) var(--space-5);
     }
     
     .section {
-        padding: 0 24px 24px;
+        padding: 0 var(--space-6) var(--space-6);
         border-bottom: 1px solid #f0f0f0;
     }
     
@@ -414,67 +365,56 @@
     }
     
     .section h3 {
-        margin: 0 0 16px 0;
+        margin: 0 0 var(--space-4) 0;
         font-size: 18px;
         font-weight: 600;
-        color: #1f2937;
+        color: var(--gray-800);
     }
     
     .section-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 16px;
+        margin-bottom: var(--space-4);
     }
     
     .import-form {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: var(--space-4);
     }
     
     .input-group {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: var(--space-2);
     }
-    
-
     
     label {
         font-size: 14px;
         font-weight: 500;
-        color: #374151;
+        color: var(--gray-900);
     }
     
     input[type="url"] {
-        padding: 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        font-size: 14px;
-        transition: border-color 0.2s;
-    }
-    
-    input[type="url"]:focus {
-        outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        /* Uses global .input styles with custom sizing */
+        padding: var(--space-3);
     }
     
     .import-button {
         background: #2563eb;
-        color: white;
+        color: var(--white);
         border: none;
-        padding: 12px 24px;
-        border-radius: 8px;
+        padding: var(--space-3) var(--space-6);
+        border-radius: var(--radius-lg);
         font-size: 14px;
         font-weight: 500;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
-        transition: background-color 0.2s;
+        gap: var(--space-2);
+        transition: background-color var(--transition-normal);
     }
     
     .import-button:hover:not(:disabled) {

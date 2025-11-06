@@ -69,8 +69,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
         }
 
         // Check if the calendar has been modified using HTTP conditional requests
-        console.log('Checking for updates:', url)
-        const fetchResult = await fetchWithHeaders(url, etag, lastModified)
+                const fetchResult = await fetchWithHeaders(url, etag, lastModified)
         
         if (fetchResult.status === 304) {
             // Calendar hasn't changed
@@ -129,8 +128,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
             // Skip "Unavailable" events with empty descriptions
             if (icalEvent.summary === 'Unavailable' && (!icalEvent.description || icalEvent.description.trim() === '')) {
-                console.log(`Skipping "Unavailable" event with UID: ${icalEvent.uid}`)
-                continue
+                                continue
             }
 
             currentEventIds.add(icalEvent.uid)

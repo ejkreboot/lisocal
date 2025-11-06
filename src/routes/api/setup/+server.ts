@@ -29,8 +29,7 @@ export const POST: RequestHandler = async ({ request }) => {
         
         if (userSelectError && userSelectError.code === 'PGRST116') {
             // User doesn't exist, create them
-            console.log('Creating user record for:', userId)
-            const { error: userCreateError } = await supabaseAdmin
+                        const { error: userCreateError } = await supabaseAdmin
                 .from('users')
                 .insert({
                     id: userId,
@@ -52,8 +51,7 @@ export const POST: RequestHandler = async ({ request }) => {
         
         if (calendarSelectError && calendarSelectError.code === 'PGRST116') {
             // No calendar exists, create one
-            console.log('Creating calendar for user:', userId)
-            const { data: newCalendar, error: calendarCreateError } = await supabaseAdmin
+                        const { data: newCalendar, error: calendarCreateError } = await supabaseAdmin
                 .from('calendars')
                 .insert({
                     user_id: userId,

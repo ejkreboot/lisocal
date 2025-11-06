@@ -65,8 +65,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
         }
 
         // Parse the ICS file from URL
-        console.log('Fetching ICS from:', normalizedUrl)
-        const events = await ical.fromURL(normalizedUrl)
+                const events = await ical.fromURL(normalizedUrl)
         
         const importedEvents: Array<{
             calendar_id: string

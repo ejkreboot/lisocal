@@ -276,42 +276,48 @@
 {/if}
 
 <style>
+    /* Using global modal styles - renaming for compatibility */
     .dialog-overlay {
         position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
+        right: 0;
+        bottom: 0;
         background: rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 1000;
+        padding: var(--space-5);
+        box-sizing: border-box;
     }
     
     .dialog-content {
-        background: white;
-        border-radius: 12px;
+        background: var(--white);
+        border-radius: var(--radius-xl);
         width: 90%;
         max-width: 500px;
         max-height: 80vh;
         overflow-y: auto;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        box-shadow: var(--shadow-md);
+        display: flex;
+        flex-direction: column;
     }
     
     .dialog-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 20px 24px;
-        border-bottom: 1px solid #e0e0e0;
+        padding: var(--space-5) var(--space-6);
+        border-bottom: 1px solid var(--gray-200);
+        flex-shrink: 0;
     }
     
     .dialog-header h3 {
         margin: 0;
         font-size: 18px;
         font-weight: 600;
-        color: #333;
+        color: var(--gray-700);
     }
     
     .close-button {
@@ -319,15 +325,15 @@
         border: none;
         font-size: 24px;
         cursor: pointer;
-        color: #666;
+        color: var(--gray-600);
         padding: 0;
         width: 32px;
         height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 6px;
-        transition: all 0.2s;
+        border-radius: var(--radius-md);
+        transition: all var(--transition-normal);
     }
     
     .close-button:hover {

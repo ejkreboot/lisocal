@@ -118,7 +118,10 @@
 <div class="auth-container">
     <div class="auth-card">
         <div class="auth-header">
+            <div class="auth-header-row">
+            <img src="/logo_250.png" alt="lisocal logo" width="25" height="25" />
             <h1 class=brand_name>lisocal</h1>
+            </div>
             <p>Sign in to access your calendar</p>
         </div>
         
@@ -227,96 +230,91 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 20px;
+        padding: var(--space-5);
     }
     
     .auth-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-md);
         max-width: 400px;
         width: 100%;
         overflow: hidden;
     }
     
     .auth-header {
-        padding: 32px 32px 24px;
+        padding: var(--space-8) var(--space-8) var(--space-6);
         text-align: center;
-        background: #f8f9fa;
+        background: var(--gray-50);
         border-bottom: 1px solid #e9ecef;
     }
     
+    .auth-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: var(--space-4);
+    }
     .auth-header h1 {
-        margin: 0 0 8px 0;
-        color: #1976d2;
+        float: right;
+        margin: 0 0 var(--space-2) 0;
         font-size: 28px;
         font-weight: 700;
     }
     
     .auth-header p {
         margin: 0;
-        color: #666;
+        color: var(--gray-600);
         font-size: 16px;
     }
     
     .auth-form {
-        padding: 32px;
+        padding: var(--space-8);
     }
 
     .brand_name {
-        font-family: "Dosis";
+        font-family: var(--font-secondary);
         font-weight: 700;
+        padding-top: 5px;
         color: #646565;
     }   
     
     .input-group {
-        margin-bottom: 24px;
+        margin-bottom: var(--space-6);
     }
     
     .input-group label {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: var(--space-2);
         font-weight: 600;
-        color: #333;
+        color: var(--gray-700);
         font-size: 14px;
     }
     
     .input-group input {
+        /* Uses global .input styles with size override */
         width: 100%;
-        padding: 12px 16px;
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
         font-size: 16px;
-        transition: border-color 0.2s;
-        box-sizing: border-box;
-    }
-    
-    .input-group input:focus {
-        outline: none;
-        border-color: #2196f3;
+        padding: var(--space-3) var(--space-4);
     }
     
     .input-group input:disabled {
-        background: #f5f5f5;
+        background: var(--gray-100);
         cursor: not-allowed;
     }
     
     .auth-button {
+        /* Uses .btn .btn-primary styles with custom sizing */
         width: 100%;
-        padding: 12px 24px;
-        background: #2196f3;
-        color: white;
-        border: none;
-        border-radius: 8px;
+        padding: var(--space-3) var(--space-6);
         font-size: 16px;
         font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin-bottom: 16px;
+        margin-bottom: var(--space-4);
     }
     
     .auth-button:hover:not(:disabled) {
-        background: #1976d2;
+        background: var(--primary-hover);
         transform: translateY(-1px);
     }
     

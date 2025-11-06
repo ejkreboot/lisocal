@@ -88,8 +88,7 @@
             const params = shareToken ? `?shareToken=${shareToken}` : ''
             const authToken = shareToken ? null : await getAuthToken()
             
-            console.log('Creating todo:', { calendarId, text: newTodoText.trim(), shareToken, authToken: authToken ? 'present' : 'missing' })
-            
+                        
             const response = await fetch(`/api/todos${params}`, {
                 method: 'POST',
                 headers: {
@@ -324,8 +323,7 @@
     async function saveReorder(todoIds: string[]) {
         if (!canEdit || !calendarId) return
         
-        console.log('Saving reorder:', todoIds)
-        
+                
         try {
             const params = shareToken ? `?shareToken=${shareToken}` : ''
             const response = await fetch(`/api/todos${params}`, {
@@ -342,16 +340,14 @@
                 })
             })
             
-            console.log('Reorder response:', response.status, response.ok)
-            
+                        
             if (!response.ok) {
                 const errorText = await response.text()
                 console.error('Reorder failed:', errorText)
                 throw new Error('Failed to save todo order')
             }
             
-            console.log('Reorder saved successfully')
-        } catch (error) {
+                    } catch (error) {
             console.error('Error saving todo order:', error)
             // Could reload todos here if needed
         }
@@ -391,7 +387,7 @@
                     <div class="add-todo-section">
                         <div class="add-todo-container">
                             <input 
-                                class="new-todo-input"
+                                class="input new-todo-input"
                                 bind:value={newTodoText}
                                 on:keydown={handleNewTodoKeydown}
                                 placeholder="Add a new task..."
@@ -399,7 +395,7 @@
                                 disabled={loading}
                             />
                             <button 
-                                class="add-todo-button"
+                                class="btn btn-primary add-todo-button"
                                 on:click={addTodo}
                                 disabled={!newTodoText.trim() || loading}
                                 aria-label="Add task"
@@ -457,7 +453,7 @@
                                             
                                             {#if editingId === todo.id}
                                                 <input 
-                                                    class="edit-todo-input"
+                                                    class="input edit-todo-input"
                                                     bind:value={editText}
                                                     on:keydown={handleEditKeydown}
                                                     on:blur={saveEdit}
@@ -518,7 +514,7 @@
                                             
                                             {#if editingId === todo.id}
                                                 <input 
-                                                    class="edit-todo-input"
+                                                    class="input edit-todo-input"
                                                     bind:value={editText}
                                                     on:keydown={handleEditKeydown}
                                                     on:blur={saveEdit}
@@ -569,135 +565,45 @@
 {/if}
 
 <style>
-    .modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        padding: 20px;
-        box-sizing: border-box;
-    }
+    /* TodoModal specific styles - using global styles from global.css */
     
     .modal-content {
-        background: white;
-        border-radius: 12px;
-        width: 100%;
         max-width: 500px;
         max-height: 80vh;
-        display: flex;
-        flex-direction: column;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    }
-    
-    .modal-header {
-        padding: 20px 24px 16px;
-        border-bottom: 1px solid #e0e0e0;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-shrink: 0;
-    }
-    
-    .modal-header h2 {
-        margin: 0;
-        color: #333;
-        font-size: 20px;
-        font-weight: 600;
-    }
-    
-    .close-button {
-        background: none;
-        border: none;
-        font-size: 24px;
-        color: #666;
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        transition: all 0.2s;
-        line-height: 1;
-    }
-    
-    .close-button:hover {
-        background: #f0f0f0;
-        color: #333;
-    }
-    
-    .modal-body {
-        padding: 0;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        flex: 1;
+        box-shadow: var(--shadow-lg);
     }
     
     .add-todo-section {
-        padding: 20px 24px;
+        padding: var(--space-5) var(--space-6);
         border-bottom: 1px solid #f0f0f0;
-        background: #fafafa;
+        background: var(--gray-50);
         flex-shrink: 0;
     }
     
     .add-todo-container {
         display: flex;
-        gap: 12px;
+        gap: var(--space-3);
         align-items: center;
     }
     
     .new-todo-input {
         flex: 1;
-        padding: 12px 16px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 14px;
-        outline: none;
-        transition: border-color 0.2s;
-    }
-    
-    .new-todo-input:focus {
-        border-color: #2196f3;
-        box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-    }
-    
-    .new-todo-input::placeholder {
-        color: #999;
+        margin: 0;
     }
     
     .add-todo-button {
-        background: #2196f3;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 12px 20px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
         white-space: nowrap;
-    }
-    
-    .add-todo-button:hover:not(:disabled) {
-        background: #1976d2;
-    }
-    
-    .add-todo-button:disabled {
-        background: #ccc;
-        cursor: not-allowed;
+        flex-shrink: 0;
     }
     
     .todos-container {
         overflow-y: auto;
         flex: 1;
-        padding: 0 24px 24px;
+        padding: 0 var(--space-6) var(--space-6);
     }
     
     .todo-section {
-        margin-bottom: 24px;
+        margin-bottom: var(--space-6);
     }
     
     .todo-section:last-child {
@@ -707,20 +613,20 @@
     .section-title {
         font-size: 14px;
         font-weight: 600;
-        color: #666;
-        margin: 20px 0 12px;
+        color: var(--gray-600);
+        margin: var(--space-5) 0 var(--space-3);
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
     
     .section-title.completed-section {
-        color: #999;
+        color: var(--gray-500);
     }
     
     .todos-list {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: var(--space-2);
         position: relative;
     }
     
@@ -728,22 +634,22 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
-        padding: 12px 16px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        background: white;
-        transition: all 0.2s ease, transform 0.15s ease;
+        gap: var(--space-2);
+        padding: var(--space-3) var(--space-4);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        background: var(--white);
+        transition: all var(--transition-normal), transform 0.15s ease;
         position: relative;
     }
     
     .todo-item:hover {
         border-color: #d0d0d0;
-        background: #fafafa;
+        background: var(--gray-50);
     }
     
     .todo-item.completed {
-        background: #f8f9fa;
+        background: var(--gray-50);
         border-color: #e8e9ea;
     }
     
@@ -760,8 +666,8 @@
     }
     
     .todo-item.drag-over {
-        border-color: #2196f3;
-        background: #e3f2fd;
+        border-color: var(--primary-color);
+        background: var(--primary-light);
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(33, 150, 243, 0.2);
     }
@@ -770,16 +676,16 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #999;
+        color: var(--gray-500);
         cursor: grab;
-        padding: 4px;
-        border-radius: 4px;
-        transition: all 0.2s;
+        padding: var(--space-1);
+        border-radius: var(--radius-sm);
+        transition: all var(--transition-normal);
         flex-shrink: 0;
     }
     
     .drag-handle:hover {
-        color: #666;
+        color: var(--gray-600);
         background: rgba(0, 0, 0, 0.1);
     }
     
@@ -794,7 +700,7 @@
     .todo-content {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: var(--space-3);
         flex: 1;
         min-width: 0;
     }
@@ -802,25 +708,25 @@
     .todo-checkbox {
         width: 20px;
         height: 20px;
-        border: 2px solid #ddd;
-        border-radius: 4px;
-        background: white;
+        border: 2px solid var(--gray-300);
+        border-radius: var(--radius-sm);
+        background: var(--white);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all var(--transition-normal);
         padding: 0;
         flex-shrink: 0;
     }
     
     .todo-checkbox:hover {
-        border-color: #2196f3;
+        border-color: var(--primary-color);
     }
     
     .todo-checkbox.readonly {
         cursor: default;
-        background: #f0f0f0;
+        background: var(--gray-100);
     }
     
     .todo-item.completed .todo-checkbox {
@@ -831,14 +737,14 @@
     .checkbox-icon {
         font-size: 12px;
         font-weight: bold;
-        color: white;
+        color: var(--white);
         line-height: 1;
     }
     
     .todo-text {
         flex: 1;
         font-size: 14px;
-        color: #333;
+        color: var(--gray-700);
         line-height: 1.4;
         word-wrap: break-word;
         min-width: 0;
@@ -846,10 +752,10 @@
     
     .todo-text.editable {
         cursor: pointer;
-        padding: 4px 8px;
-        margin: -4px -8px;
-        border-radius: 4px;
-        transition: background-color 0.2s;
+        padding: var(--space-1) var(--space-2);
+        margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
+        border-radius: var(--radius-sm);
+        transition: background-color var(--transition-normal);
     }
     
     .todo-text.editable:hover {
@@ -858,29 +764,28 @@
     
     .todo-text.completed {
         text-decoration: line-through;
-        color: #999;
+        color: var(--gray-500);
     }
     
     .edit-todo-input {
         flex: 1;
-        padding: 8px 12px;
-        border: 2px solid #2196f3;
-        border-radius: 4px;
+        margin: 0;
+        padding: var(--space-2) var(--space-3);
+        border: 2px solid var(--primary-color);
+        border-radius: 0;
         font-size: 14px;
-        outline: none;
-        background: white;
     }
     
     .delete-button {
         background: none;
         border: none;
-        color: #999;
+        color: var(--gray-500);
         cursor: pointer;
-        padding: 4px 8px;
+        padding: var(--space-1) var(--space-2);
         font-size: 16px;
         font-weight: bold;
-        border-radius: 4px;
-        transition: all 0.2s;
+        border-radius: var(--radius-sm);
+        transition: all var(--transition-normal);
         flex-shrink: 0;
         line-height: 1;
     }
@@ -892,24 +797,24 @@
     
     .empty-state {
         text-align: center;
-        padding: 40px 20px;
-        color: #666;
+        padding: 40px var(--space-5);
+        color: var(--gray-600);
     }
     
     .empty-state p {
-        margin: 0 0 8px;
+        margin: 0 0 var(--space-2);
         font-size: 16px;
     }
     
     .empty-hint {
         font-size: 14px;
-        color: #999;
+        color: var(--gray-500);
     }
     
     .loading-state {
         text-align: center;
-        padding: 40px 20px;
-        color: #666;
+        padding: 40px var(--space-5);
+        color: var(--gray-600);
     }
     
     .loading-state p {
@@ -920,24 +825,24 @@
     /* Mobile responsiveness */
     @media (max-width: 576px) {
         .modal-backdrop {
-            padding: 16px;
+            padding: var(--space-4);
         }
         
         .modal-content {
-            max-height: 90vh;
+            max-height: 95vh;
         }
         
         .modal-header {
-            padding: 16px 20px 12px;
+            padding: var(--space-4) var(--space-5) var(--space-3);
         }
         
         .add-todo-section {
-            padding: 16px 20px;
+            padding: var(--space-4) var(--space-5);
         }
         
         .add-todo-container {
             flex-direction: column;
-            gap: 12px;
+            gap: var(--space-3);
         }
         
         .new-todo-input {
@@ -946,20 +851,20 @@
         
         .add-todo-button {
             width: 100%;
-            padding: 12px;
+            padding: var(--space-3);
         }
         
         .todos-container {
-            padding: 0 20px 20px;
+            padding: 0 var(--space-5) var(--space-5);
         }
         
         .todo-item {
-            padding: 12px;
-            gap: 8px;
+            padding: var(--space-3);
+            gap: var(--space-2);
         }
         
         .drag-handle {
-            padding: 8px 4px;
+            padding: var(--space-2) var(--space-1);
         }
         
         .drag-handle .material-symbols-outlined {

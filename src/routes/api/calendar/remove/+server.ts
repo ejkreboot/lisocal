@@ -159,7 +159,6 @@ export const DELETE: RequestHandler = async ({ locals, request }) => {
             throw error(500, 'Failed to remove external calendar events')
         }
 
-        console.log(`Removed ${eventCount} events from external calendar: ${normalizedUrl}`)
 
         return json({
             success: true,

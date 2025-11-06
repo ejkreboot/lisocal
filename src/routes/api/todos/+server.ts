@@ -81,11 +81,9 @@ export const POST: RequestHandler = async ({ request, url }) => {
         const body = await request.json();
         const { calendarId, text } = body;
 
-        console.log('POST /api/todos - shareToken:', shareToken, 'calendarId:', calendarId, 'text:', text);
-
+        
         if (!calendarId || !text?.trim()) {
-            console.log('Missing required fields');
-            return json({ error: 'Calendar ID and text are required' }, { status: 400 });
+                        return json({ error: 'Calendar ID and text are required' }, { status: 400 });
         }
 
         if (shareToken) {
@@ -142,11 +140,9 @@ export const POST: RequestHandler = async ({ request, url }) => {
             const token = authHeader.split(' ')[1];
             const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-            console.log('Auth result:', { user: user?.id, authError });
-
+            
             if (authError || !user) {
-                console.log('Auth failed:', authError);
-                return json({ error: 'Invalid token' }, { status: 401 });
+                                return json({ error: 'Invalid token' }, { status: 401 });
             }
 
             // Get the next sort index
@@ -160,8 +156,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
                 .single();
 
             const nextSortIndex = Math.max((lastTodo?.sort_index || 0) + 1, 0);
-            console.log('Next sort index:', nextSortIndex);
-
+            
             const { data, error } = await supabaseAdmin
                 .from('todos')
                 .insert({
@@ -173,8 +168,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
                 .select()
                 .single();
 
-            console.log('Insert result:', { data, error });
-
+            
             if (error) {
                 console.error('Database insert error:', error);
                 return json({ error: error.message }, { status: 500 });
@@ -197,8 +191,7 @@ export const PUT: RequestHandler = async ({ request, url }) => {
 
         // Handle reorder operations first (they don't need a todoId)
         if (body.reorderData) {
-            console.log('Detected reorder operation');
-            
+                        
             if (shareToken) {
                 // Handle shared calendar reorder
                 const { data: sharedLink, error: linkError } = await supabaseAdmin
@@ -217,12 +210,10 @@ export const PUT: RequestHandler = async ({ request, url }) => {
 
                 const { todoIds } = body.reorderData;
                 
-                console.log('Processing reorder for shared calendar:', { todoIds, calendarId: sharedLink.calendar_id });
-                
+                                
                 // Update sort indexes for all reordered todos
                 const updates = todoIds.map((id: string, index: number) => {
-                    console.log(`Updating shared todo ${id} to sort_index ${index}`);
-                    return supabaseAdmin
+                                        return supabaseAdmin
                         .from('todos')
                         .update({ sort_index: index })
                         .eq('id', id)
@@ -230,8 +221,7 @@ export const PUT: RequestHandler = async ({ request, url }) => {
                 });
 
                 const results = await Promise.all(updates);
-                console.log('Shared reorder update results:', results.map(r => r.error || 'success'));
-                
+                                
                 return json({ success: true });
             } else {
                 // Handle authenticated user reorder
@@ -249,12 +239,10 @@ export const PUT: RequestHandler = async ({ request, url }) => {
 
                 const { todoIds, calendarId } = body.reorderData;
                 
-                console.log('Processing reorder for authenticated user:', { todoIds, calendarId });
-                
+                                
                 // Update sort indexes for all reordered todos
                 const updates = todoIds.map((id: string, index: number) => {
-                    console.log(`Updating todo ${id} to sort_index ${index}`);
-                    return supabaseAdmin
+                                        return supabaseAdmin
                         .from('todos')
                         .update({ sort_index: index })
                         .eq('id', id)
@@ -262,8 +250,7 @@ export const PUT: RequestHandler = async ({ request, url }) => {
                 });
 
                 const results = await Promise.all(updates);
-                console.log('Reorder update results:', results.map(r => r.error || 'success'));
-                
+                                
                 return json({ success: true });
             }
         }
