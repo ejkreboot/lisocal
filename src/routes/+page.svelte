@@ -151,12 +151,17 @@
     
     .sidebar-container {
         display: none;
+        flex-shrink: 0;
+        width: 25%;
+        min-width: 240px;
+        max-width: 400px;
     }
     
     .calendar-container {
         flex: 1;
         display: flex;
         flex-direction: column;
+        min-width: 0;
     }
     
     .calendar-navigation {
