@@ -222,7 +222,8 @@
     .auth-container {
         min-height: 100vh;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
+        margin-top: 100px;
         justify-content: center;
         padding: var(--space-5);
     }
@@ -320,30 +321,6 @@
     
     .auth-button.loading {
         position: relative;
-    }
-    
-    .secondary-button {
-        width: 100%;
-        padding: 10px 24px;
-        background: transparent;
-        color: #2196f3;
-        border: 2px solid #2196f3;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-        margin-top: 12px;
-    }
-    
-    .secondary-button:hover:not(:disabled) {
-        background: #2196f3;
-        color: white;
-    }
-    
-    .secondary-button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
     }
     
     .disabled-input {

@@ -116,18 +116,59 @@
                     shareToken={data.sharedCalendar?.shareToken || null}
                 />
             {:else}
-                <div class="no-calendar">
-                    <h2>
-                        {#if $user}
-                            Creating your default calendar...
-                        {:else}
-                            Get started by signing in to access your calendar.
-                        {/if}
-                    </h2><br>
-                    {#if !$user}
-                        <a href="/auth" class="cta-button">Sign In</a>
-                    {/if}
-                </div>
+                {#if $user}
+                    <div class="no-calendar">
+                        <h2>Loading your calendar...</h2>
+                    </div>
+                {:else}
+                    <!-- Landing page for non-authenticated users -->
+                    <div class="landing-page">
+                        <div class="hero-section">
+                            <div class="hero-content">
+                                <h1 class="hero-title">lisocal</h1>
+                                <p class="hero-description">
+                                    Effortless calendar management. Just click and type. 
+                                    Password free, no registration needed. Enter your email,
+                                    get a code, and start scheduling in seconds. 
+                                </p>
+                                <a href="/auth" class="cta-button">Get Started</a>
+                            </div>
+                        </div>
+                        
+                        <div class="features-section">
+                            <div class="features-grid">
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <span class="material-symbols-outlined">bolt</span>
+                                    </div>
+                                    <h3>Simple. Efficient.</h3>
+                                    <p>Click and type. No forms, no dialogs, no hassle.</p>
+                                </div>
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <span class="material-symbols-outlined">check_box</span>
+                                    </div>
+                                    <h3>To Do and Schedule Side By Side</h3>
+                                    <p>Manage your tasks and events in one place.</p>
+                                </div>                                
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <span class="material-symbols-outlined">hub</span>
+                                    </div>
+                                    <h3>Everything in one place.</h3>
+                                    <p>Import external calendars with two clicks.</p>
+                                </div>                                
+                                <div class="feature-card">
+                                    <div class="feature-icon">
+                                        <span class="material-symbols-outlined">share</span>
+                                    </div>
+                                    <h3>Easy Sharing</h3>
+                                    <p>Share your calendar with a simple link.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {/if}
             {/if}
         </main>
     </div>
@@ -278,6 +319,106 @@
         font-size: 16px;
     }
     
+    /* Landing page styles */
+    .landing-page {
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+    
+    .hero-section {
+        text-align: center;
+        padding: 80px var(--space-6) 60px;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .hero-content {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .hero-title {
+        font-size: 48px;
+        font-weight: 300;
+        color: var(--gray-700);
+        margin: 0 0 var(--space-4) 0;
+        font-family: var(--font-primary);
+        letter-spacing: -0.02em;
+    }
+        
+    .hero-description {
+        font-size: 18px;
+        color: var(--gray-600);
+        line-height: 1.6;
+        margin: 0 0 var(--space-8) 0;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .cta-button {
+        display: inline-block;
+        background: var(--primary-color);
+        color: var(--white);
+        padding: var(--space-3) var(--space-6);
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all var(--transition-normal);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .cta-button:hover {
+        background: var(--primary-hover);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .features-section {
+        padding: 60px var(--space-6);
+    }
+    
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--space-8);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .feature-card {
+        text-align: center;
+        padding: var(--space-4);
+    }
+    
+    .feature-icon {
+        margin-bottom: var(--space-4);
+        display: block;
+    }
+    
+    .feature-icon .material-symbols-outlined {
+        font-size: 32px;
+        color: var(--gray-600);
+    }
+    
+    .feature-card h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin: 0 0 var(--space-3) 0;
+        font-family: var(--font-primary);
+    }
+    
+    .feature-card p {
+        font-size: 14px;
+        color: var(--gray-600);
+        line-height: 1.5;
+        margin: 0;
+    }
+    
     /* Show sidebar for larger screens */
     @media (min-width: 1000px) {
         .sidebar-container {
@@ -308,6 +449,29 @@
         .month-year {
             min-width: auto;
             font-size: 18px;
+        }
+        
+        /* Landing page mobile styles */
+        .hero-section {
+            padding: 60px var(--space-4) 40px;
+        }
+        
+        .hero-title {
+            font-size: 36px;
+        }
+                
+        .hero-description {
+            font-size: 16px;
+            margin-bottom: var(--space-6);
+        }
+        
+        .features-section {
+            padding: 40px var(--space-4);
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+            gap: var(--space-6);
         }
     }
 </style>
