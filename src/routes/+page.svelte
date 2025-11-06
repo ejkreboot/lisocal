@@ -2,6 +2,7 @@
     import { getMonthName } from '$lib/calendar-utils.js'
     import CalendarMonth from '$lib/components/CalendarMonth.svelte'
     import TodoSidebar from '$lib/components/TodoSidebar.svelte'
+    import ScratchpadSidebar from '$lib/components/ScratchpadSidebar.svelte'
     import { user, session, loading, signOut } from '$lib/auth.js'
     import Header from '$lib/components/Header.svelte'
 
@@ -85,11 +86,18 @@
 <div class="page-wrapper">
     {#if calendarId}
         <div class="sidebar-container">
-            <TodoSidebar 
-                {canEdit}
-                {calendarId}
-                shareToken={data.sharedCalendar?.shareToken || null}
-            />
+            <div class="sidebar-content">
+                <TodoSidebar 
+                    {canEdit}
+                    {calendarId}
+                    shareToken={data.sharedCalendar?.shareToken || null}
+                />
+                <ScratchpadSidebar 
+                    {canEdit}
+                    {calendarId}
+                    shareToken={data.sharedCalendar?.shareToken || null}
+                />
+            </div>
         </div>
     {/if}
     
@@ -196,6 +204,15 @@
         width: 25%;
         min-width: 240px;
         max-width: 400px;
+        height: calc(100vh - 60px);
+        overflow: hidden;
+    }
+    
+    .sidebar-content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
     
     .calendar-container {
@@ -213,6 +230,9 @@
         padding: var(--space-4) 0;
         border-bottom: 1px solid var(--gray-200);
         background: var(--white);
+        min-height: 70px;
+        max-height: 70px;
+        height: 70px;
     }
     
     .month-navigation {

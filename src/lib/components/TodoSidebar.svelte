@@ -370,22 +370,24 @@
     <div class="sidebar-content">
         {#if canEdit}
             <div class="add-todo-section">
-                <input 
-                    class="input new-todo-input"
-                    bind:value={newTodoText}
-                    onkeydown={handleNewTodoKeydown}
-                    placeholder="Add a new task..."
-                    aria-label="New task description"
-                    disabled={loading}
-                />
-                <button 
-                    class="btn btn-primary add-todo-button"
-                    onclick={addTodo}
-                    disabled={!newTodoText.trim() || loading}
-                    aria-label="Add task"
-                >
-                    {loading ? '...' : 'Add'}
-                </button>
+                <div class="add-todo-input-container">
+                    <input 
+                        class="input new-todo-input"
+                        bind:value={newTodoText}
+                        onkeydown={handleNewTodoKeydown}
+                        placeholder="Add a new task..."
+                        aria-label="New task description"
+                        disabled={loading}
+                    />
+                    <button 
+                        class="btn btn-primary add-todo-button"
+                        onclick={addTodo}
+                        disabled={!newTodoText.trim() || loading}
+                        aria-label="Add task"
+                    >
+                        <span class="material-symbols-outlined">add</span>
+                    </button>
+                </div>
             </div>
         {/if}
         
@@ -561,7 +563,7 @@
         border-right: 1px solid var(--gray-200);
         display: flex;
         flex-direction: column;
-        height: 100%;
+        height: 50%;
         width: 100%;
         min-width: 240px;
         max-width: 400px;
@@ -571,6 +573,9 @@
         padding: var(--space-5) var(--space-5) var(--space-4);
         border-bottom: 1px solid var(--gray-200);
         flex-shrink: 0;
+        min-height: 70px;
+        max-height: 70px;
+        height: 70px;
     }
     
     .sidebar-header h2 {
@@ -595,16 +600,32 @@
         flex-shrink: 0;
     }
     
+    .add-todo-input-container {
+        display: flex;
+        gap: var(--space-2);
+        align-items: center;
+    }
+    
     .new-todo-input {
-        margin-bottom: var(--space-2);
+        flex: 1;
         font-size: 13px;
         padding: var(--space-2) var(--space-3);
+        margin: 0;
     }
     
     .add-todo-button {
-        width: 100%;
+        width: 32px;
+        height: 32px;
         font-size: 13px;
-        padding: var(--space-2);
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .add-todo-button .material-symbols-outlined {
+        font-size: 16px;
     }
     
     .todos-container {

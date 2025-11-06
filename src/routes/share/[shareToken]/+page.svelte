@@ -3,6 +3,7 @@
     import { getMonthName } from '$lib/calendar-utils.js'
     import CalendarMonth from '$lib/components/CalendarMonth.svelte'
     import TodoSidebar from '$lib/components/TodoSidebar.svelte'
+    import ScratchpadSidebar from '$lib/components/ScratchpadSidebar.svelte'
     export let data: any
 
     
@@ -49,11 +50,18 @@
 <div class="page-wrapper">
     {#if calendarId}
         <div class="sidebar-container">
-            <TodoSidebar 
-                {canEdit}
-                {calendarId}
-                shareToken={data.sharedCalendar?.shareToken || null}
-            />
+            <div class="sidebar-content">
+                <TodoSidebar 
+                    {canEdit}
+                    {calendarId}
+                    shareToken={data.sharedCalendar?.shareToken || null}
+                />
+                <ScratchpadSidebar 
+                    {canEdit}
+                    {calendarId}
+                    shareToken={data.sharedCalendar?.shareToken || null}
+                />
+            </div>
         </div>
     {/if}
     
@@ -105,6 +113,15 @@
         width: 25%;
         min-width: 240px;
         max-width: 400px;
+        height: calc(100vh - 60px);
+        overflow: hidden;
+    }
+    
+    .sidebar-content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
     }
     
     .calendar-container {
@@ -177,7 +194,12 @@
     
     .calendar-main {
         flex: 1;
-        padding: 0;
+        padding: var(--space-6);
+        padding-top: 40px;
+        max-width: 1200px;
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
     }
     
     .no-calendar {
