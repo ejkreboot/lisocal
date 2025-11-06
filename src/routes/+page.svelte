@@ -1,6 +1,7 @@
 <script lang="ts">
     import { getMonthName } from '$lib/calendar-utils.js'
     import CalendarMonth from '$lib/components/CalendarMonth.svelte'
+    import TodoSidebar from '$lib/components/TodoSidebar.svelte'
     import { user, session, loading, signOut } from '$lib/auth.js'
     import Header from '$lib/components/Header.svelte'
 
@@ -81,44 +82,55 @@
 
 <Header data={data} calendarName={userCalendar?.name} calendarId={userCalendar?.id} />
 
-
-<div class="calendar-container">
-    <main class="calendar-main">
-        {#if $loading}
-            <div class="loading-container">
-                <div class="loading-spinner">Loading your calendar...</div>
-            </div>
-        {:else if calendarId}
-            <div class="calendar-navigation">
-                <div class="month-navigation">
-                    <button class="nav-button" on:click={previousMonth}>‹</button>
-                    <h2 class="month-year">{monthName} {currentYear}</h2>
-                    <button class="nav-button" on:click={nextMonth}>›</button>
-                </div>
-                <button class="today-button" on:click={goToToday}>Today</button>
-            </div>
-            <CalendarMonth 
-                year={currentYear} 
-                month={currentMonth} 
-                {calendarId}
+<div class="page-wrapper">
+    {#if calendarId}
+        <div class="sidebar-container">
+            <TodoSidebar 
                 {canEdit}
+                {calendarId}
                 shareToken={data.sharedCalendar?.shareToken || null}
             />
-        {:else}
-            <div class="no-calendar">
-                <h2>
-                    {#if $user}
-                        Creating your default calendar...
-                    {:else}
-                        Get started by signing in to access your calendar.
+        </div>
+    {/if}
+    
+    <div class="calendar-container">
+        <main class="calendar-main">
+            {#if $loading}
+                <div class="loading-container">
+                    <div class="loading-spinner">Loading your calendar...</div>
+                </div>
+            {:else if calendarId}
+                <div class="calendar-navigation">
+                    <div class="month-navigation">
+                        <button class="nav-button" on:click={previousMonth}>‹</button>
+                        <h2 class="month-year">{monthName} {currentYear}</h2>
+                        <button class="nav-button" on:click={nextMonth}>›</button>
+                    </div>
+                    <button class="today-button" on:click={goToToday}>Today</button>
+                </div>
+                <CalendarMonth 
+                    year={currentYear} 
+                    month={currentMonth} 
+                    {calendarId}
+                    {canEdit}
+                    shareToken={data.sharedCalendar?.shareToken || null}
+                />
+            {:else}
+                <div class="no-calendar">
+                    <h2>
+                        {#if $user}
+                            Creating your default calendar...
+                        {:else}
+                            Get started by signing in to access your calendar.
+                        {/if}
+                    </h2><br>
+                    {#if !$user}
+                        <a href="/auth" class="cta-button">Sign In</a>
                     {/if}
-                </h2><br>
-                {#if !$user}
-                    <a href="/auth" class="cta-button">Sign In</a>
-                {/if}
-            </div>
-        {/if}
-    </main>
+                </div>
+            {/if}
+        </main>
+    </div>
 </div>
 
 <style>
@@ -129,6 +141,22 @@
     .today-button,
     .nav-button {
         font-family: var(--font-primary);
+    }
+    
+    .page-wrapper {
+        display: flex;
+        min-height: calc(100vh - 60px);
+        background: var(--gray-50);
+    }
+    
+    .sidebar-container {
+        display: none;
+    }
+    
+    .calendar-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
     }
     
     .calendar-navigation {
@@ -245,8 +273,14 @@
         font-size: 16px;
     }
     
+    /* Show sidebar for larger screens */
+    @media (min-width: 1000px) {
+        .sidebar-container {
+            display: block;
+        }
+    }
+    
     @media (max-width: 768px) {
-
         .calendar-navigation {
             flex-direction: row;
             gap: var(--space-3);

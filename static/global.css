@@ -430,6 +430,21 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: transparent;
+  background: 
+    linear-gradient(to bottom left, #a9a9a9, #595959);
+  background-blend-mode: multiply;
+  -webkit-background-clip: text;
+  background-clip: text;
+    mask-image: linear-gradient(90deg,
+      rgba(0,0,0,.8) 10%,
+      rgba(0,0,0,1) 20%,
+      rgba(0,0,0,.8) 40%,
+      rgba(0,0,0,1) 60%,
+      rgba(0,0,0,.7) 80%,
+      rgba(0,0,0,1) 100%);
+  mask-size: 200% 100%;
+  mask-position: left;
 }
 
 .delete-event {

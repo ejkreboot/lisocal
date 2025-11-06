@@ -709,7 +709,7 @@
     /* Calendar grid specific layout */
     .calendar-grid {
         width: 100%;
-        min-width: 980px;
+        min-width: 800px;
         border: 1px solid var(--gray-200);
         border-radius: var(--radius-lg);
         overflow: hidden;
@@ -754,7 +754,7 @@
     
     .calendar-day {
         min-height: 110px;
-        min-width: 140px;
+        min-width: 10px;
         border-right: 1px solid var(--gray-200);
         border-bottom: 1px solid var(--gray-200);
         padding: var(--space-2);
