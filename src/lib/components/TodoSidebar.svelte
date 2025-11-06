@@ -335,13 +335,17 @@
     
     function showTooltip(event: MouseEvent, text: string) {
         const target = event.currentTarget as HTMLElement
-        const rect = target.getBoundingClientRect()
         
-        tooltip = {
-            visible: true,
-            text: text,
-            x: rect.left,
-            y: rect.bottom + 5
+        // Only show tooltip when the text is actually truncated (overflow with ellipsis)
+        if (target && target.scrollWidth > target.clientWidth) {
+            const rect = target.getBoundingClientRect()
+            
+            tooltip = {
+                visible: true,
+                text: text,
+                x: rect.left,
+                y: rect.bottom + 5
+            }
         }
     }
     
