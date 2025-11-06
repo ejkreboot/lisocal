@@ -77,7 +77,7 @@
 
 <svelte:head>
     <title>lisocal - {monthName} {currentYear}</title>
-    <meta name="description" content="A personal calendar that shreds the gnar" />
+    <meta name="description" content="The zero friction personal planner" />
 </svelte:head>
 
 <Header data={data} calendarName={userCalendar?.name} calendarId={userCalendar?.id} />
