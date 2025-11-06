@@ -116,7 +116,22 @@
         // Distribute events to calendar days
         calendarGrid = calendarGrid.map(day => ({
             ...day,
-            events: events.filter(event => event.startDate === formatDateForDb(day.date))
+            events: events
+                .filter(event => event.startDate === formatDateForDb(day.date))
+                .sort((a, b) => {
+                    // All-day events should appear first
+                    if (a.isAllDay && !b.isAllDay) return -1
+                    if (!a.isAllDay && b.isAllDay) return 1
+                    
+                    // Among scheduled events, sort by start time
+                    if (!a.isAllDay && !b.isAllDay) {
+                        if (a.startTime && b.startTime) {
+                            return a.startTime.localeCompare(b.startTime)
+                        }
+                    }
+                    
+                    return 0
+                })
         }))
     }
     
@@ -381,10 +396,8 @@
         const target = event.target as HTMLElement
         const eventTitleElement = target.closest('.event-title, .agenda-event-title') || target
         
-        // Debug: Always show tooltip for now to test if the issue is with truncation detection
-        // Remove this debug code once fixed
-        
-        if (eventTitleElement && (eventTitleElement.scrollWidth > eventTitleElement.clientWidth || title.length > 15)) {
+        // Only show tooltip when the text is actually truncated (overflow with ellipsis)
+        if (eventTitleElement && eventTitleElement.scrollWidth > eventTitleElement.clientWidth) {
             let tooltipText = title
             if (time && time.trim()) {
                 tooltipText = `${time} - ${title}`
