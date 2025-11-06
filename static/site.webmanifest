@@ -1,7 +1,7 @@
 {
 	"name": "lisocal",
 	"short_name": "lisocal",
-	"description": "A personal calendar that shreds the gnar",
+	"description": "A zero friction personal planner",
 	"icons": [
 		{
 			"src": "/logo-250.png",

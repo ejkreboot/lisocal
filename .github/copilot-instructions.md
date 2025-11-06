@@ -1,4 +1,4 @@
-# lisocal -- A personal calendar that shreds the gnar
+# lisocal -- A personal calendar
 
 ## Architecture Overview
 
