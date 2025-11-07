@@ -570,7 +570,10 @@
     .modal-content {
         max-width: 500px;
         max-height: 80vh;
+        height: min(80vh, 600px);
         box-shadow: var(--shadow-lg);
+        display: flex;
+        flex-direction: column;
     }
     
     .add-todo-section {
@@ -596,10 +599,19 @@
         flex-shrink: 0;
     }
     
+    .modal-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+        min-height: 0;
+    }
+    
     .todos-container {
         overflow-y: auto;
         flex: 1;
         padding: 0 var(--space-6) var(--space-6);
+        min-height: 0;
     }
     
     .todo-section {
@@ -829,7 +841,8 @@
         }
         
         .modal-content {
-            max-height: 95vh;
+            max-height: 80vh;
+            height: min(80vh, calc(100vh - 2 * var(--space-4)));
         }
         
         .modal-header {

@@ -3,12 +3,14 @@
     import ShareDialog from '$lib/components/ShareDialog.svelte'
     import ExternalCalendarModal from '$lib/components/ExternalCalendarModal.svelte'
     import TodoModal from '$lib/components/TodoModal.svelte'
+    import NotesModal from '$lib/components/NotesModal.svelte'
 
     let { data, calendarName, calendarId } = $props();
 
     let editingTitle = $state(false)
     let titleInput = $state('')
     let showTodoModal = $state(false)
+    let showNotesModal = $state(false)
     let showMobileMenu = $state(false)
     let showShareDialog = $state(false)
     let showExternalCalendarModal = $state(false)
@@ -167,6 +169,13 @@
                             <span class="material-symbols-outlined" style="font-size: 16px;">task_alt</span>
                         </button>
                         <button 
+                            onclick={() => showNotesModal = true} 
+                            class="notes-button icon-button"
+                            title="Scratchpad"
+                        >
+                            <span class="material-symbols-outlined" style="font-size: 16px;">sticky_note_2</span>
+                        </button>
+                        <button 
                             onclick={() => showExternalCalendarModal = true} 
                             class="external-cal-button icon-button"
                             title="External Calendars"
@@ -218,6 +227,13 @@
                                 <span class="material-symbols-outlined">task_alt</span>
                                 To-Do List
                             </button>
+                            <button 
+                                onclick={() => { showNotesModal = true; closeMobileMenu(); }} 
+                                class="mobile-menu-item"
+                            >
+                                <span class="material-symbols-outlined">sticky_note_2</span>
+                                Scratchpad
+                            </button>
                             {#if $user}
                                 <button 
                                     onclick={() => { showExternalCalendarModal = true; closeMobileMenu(); }} 
@@ -267,6 +283,14 @@
     calendarId={calendarId || ''}
     shareToken={data?.sharedCalendar?.shareToken || null}
     on:close={() => showTodoModal = false}
+/>
+
+<NotesModal 
+    bind:isOpen={showNotesModal}
+    {canEdit}
+    calendarId={calendarId || ''}
+    shareToken={data?.sharedCalendar?.shareToken || null}
+    on:close={() => showNotesModal = false}
 />
 
     <style>
@@ -418,6 +442,16 @@
     .todo-button:hover {
         background: #f3f0ff;
         color: #6d28d9;
+    }
+    
+    .notes-button {
+        background: #f0f9ff;
+        color: #0284c7;
+    }
+    
+    .notes-button:hover {
+        background: #e0f2fe;
+        color: #0369a1;
     }
     
     .external-cal-button {

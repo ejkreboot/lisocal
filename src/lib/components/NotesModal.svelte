@@ -1,27 +1,27 @@
 <script lang="ts">
+    import { createEventDispatcher } from 'svelte'
     import { supabase } from '$lib/supabase.js'
     import { marked } from 'marked'
     
-    let { canEdit = true, calendarId, shareToken = null }: {
-        canEdit?: boolean
-        calendarId: string
-        shareToken?: string | null
-    } = $props()
+    export let isOpen = false
+    export let canEdit = true
+    export let calendarId: string
+    export let shareToken: string | null = null
     
-    let notes: any[] = $state([])
-    let loading = $state(false)
-    let currentNoteIndex = $state(0)
+    const dispatch = createEventDispatcher()
     
-    let editingContent = $state(false)
-    let tempContent = $state('')
-    let showNoteMenu = $state(false)
+    let notes: any[] = []
+    let loading = false
+    let currentNoteIndex = 0
     
-    // Load notes when calendarId changes
-    $effect(() => {
-        if (calendarId) {
-            loadNotes()
-        }
-    })
+    let editingContent = false
+    let tempContent = ''
+    let showNoteMenu = false
+    
+    // Load notes when modal opens or calendarId changes
+    $: if (isOpen && calendarId) {
+        loadNotes()
+    }
     
     async function loadNotes() {
         if (!calendarId) return
@@ -59,6 +59,28 @@
     async function getAuthToken() {
         const { data: { session } } = await supabase.auth.getSession()
         return session?.access_token || ''
+    }
+    
+    function closeModal() {
+        isOpen = false
+        dispatch('close')
+    }
+    
+    function handleModalClick(event: MouseEvent) {
+        // Close modal if clicking the backdrop
+        if (event.target === event.currentTarget) {
+            closeModal()
+        }
+    }
+    
+    function handleKeydown(event: KeyboardEvent) {
+        if (event.key === 'Escape') {
+            if (editingContent) {
+                cancelEditContent()
+            } else {
+                closeModal()
+            }
+        }
     }
     
     async function addNote() {
@@ -212,16 +234,6 @@
         }
     }
     
-    // Get current note
-    let currentNote = $derived(notes[currentNoteIndex] || null)
-    
-    // Render markdown content
-    let renderedContent = $derived(
-        currentNote && !editingContent 
-            ? marked(currentNote.content || '') 
-            : ''
-    )
-    
     // Extract first line as title, removing markdown symbols
     function getNoteTitleFromContent(content: string): string {
         if (!content.trim()) return 'Empty note'
@@ -254,167 +266,179 @@
     function closeMenu() {
         showNoteMenu = false
     }
+    
+    // Get current note
+    $: currentNote = notes[currentNoteIndex] || null
+    
+    // Render markdown content
+    $: renderedContent = currentNote && !editingContent 
+        ? marked(currentNote.content || '') 
+        : ''
 </script>
 
-<aside class="scratchpad-sidebar">
-    <div class="sidebar-header">
-        <h2>Scratchpad</h2>
-        {#if canEdit}
-            <div class="header-actions">
-                <button 
-                    class="btn btn-sm btn-secondary"
-                    onclick={addNote}
-                    title="Add new note"
-                    disabled={loading}
-                >
-                    <span class="material-symbols-outlined">add</span>
-                </button>
-                {#if notes.length > 0}
-                    <button 
-                        class="btn btn-sm btn-danger"
-                        onclick={deleteNote}
-                        title="Delete current note"
-                        disabled={loading}
-                    >
-                        <span class="material-symbols-outlined">delete</span>
-                    </button>
-                {/if}
-            </div>
-        {/if}
-    </div>
-    
-    <div class="sidebar-content">
-        {#if loading}
-            <div class="loading-state">
-                <p>Loading notes...</p>
-            </div>
-        {:else if notes.length === 0}
-            <div class="empty-state">
-                <p>No notes yet!</p>
-                {#if canEdit}
-                    <p class="empty-hint">Click the + button to create your first note.</p>
-                {/if}
-            </div>
-        {:else}
-            <div class="note-counter">
-                <button 
-                    class="nav-button"
-                    onclick={previousNote}
-                    disabled={currentNoteIndex === 0}
-                    title="Previous note"
-                >
-                    <span class="material-symbols-outlined">chevron_left</span>
-                </button>
-                
-                <div class="counter-menu-container">
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                    <span 
-                        class="counter-text clickable" 
-                        onclick={toggleNoteMenu}
-                        title="Click to select note"
-                    >
-                        {currentNoteIndex + 1} of {notes.length}
-                    </span>
-                    
-                    {#if showNoteMenu && notes.length > 1}
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="note-menu-overlay" onclick={closeMenu}></div>
-                        <div class="note-menu">
-                            {#each notes as note, index (note.id)}
-                                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                <div 
-                                    class="note-menu-item"
-                                    class:active={index === currentNoteIndex}
-                                    onclick={() => selectNote(index)}
-                                >
-                                    <span class="note-menu-number">{index + 1}</span>
-                                    <span class="note-menu-title">{getNoteTitleFromContent(note.content)}</span>
-                                </div>
-                            {/each}
-                        </div>
+<svelte:window on:keydown={handleKeydown} />
+
+{#if isOpen}
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
+    <!-- svelte-ignore a11y-no-static-element-interactions -->
+    <div class="modal-backdrop" on:click={handleModalClick}>
+        <div class="modal-content" role="dialog" aria-labelledby="notes-modal-title" aria-modal="true">
+            <div class="modal-header">
+                <h2 id="notes-modal-title">Scratchpad</h2>
+                <div class="header-actions">
+                    {#if canEdit}
+                        <button 
+                            class="btn btn-sm btn-secondary"
+                            on:click={addNote}
+                            title="Add new note"
+                            disabled={loading}
+                        >
+                            <span class="material-symbols-outlined">add</span>
+                        </button>
+                        {#if notes.length > 0}
+                            <button 
+                                class="btn btn-sm btn-danger"
+                                on:click={deleteNote}
+                                title="Delete current note"
+                                disabled={loading}
+                            >
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        {/if}
                     {/if}
+                    <button class="close-button" on:click={closeModal} aria-label="Close scratchpad">
+                        ×
+                    </button>
                 </div>
-                
-                <button 
-                    class="nav-button"
-                    onclick={nextNote}
-                    disabled={currentNoteIndex === notes.length - 1}
-                    title="Next note"
-                >
-                    <span class="material-symbols-outlined">chevron_right</span>
-                </button>
             </div>
             
-            <div class="note-content-container">
-                {#if editingContent}
-                    <textarea 
-                        class="textarea edit-content-textarea"
-                        bind:value={tempContent}
-                        onkeydown={handleContentKeydown}
-                        onblur={saveContent}
-                        placeholder="Write your note in Markdown..."
-                    ></textarea>
-                    <div class="edit-hint">
-                        Press Escape to cancel, Ctrl+Enter (⌘+Enter on Mac) to save
+            <div class="modal-body">
+                {#if loading}
+                    <div class="loading-state">
+                        <p>Loading notes...</p>
                     </div>
-                {:else if currentNote}
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_no_static_element_interactions -->
-                    <div 
-                        class="note-content"
-                        class:editable={canEdit}
-                        onclick={() => canEdit && startEditContent()}
-                        title={canEdit ? "Click to edit content" : ""}
-                    >
-                        {@html renderedContent}
+                {:else if notes.length === 0}
+                    <div class="empty-state">
+                        <p>No notes yet!</p>
+                        {#if canEdit}
+                            <p class="empty-hint">Click the + button to create your first note.</p>
+                        {/if}
+                    </div>
+                {:else}
+                    <div class="note-navigation">
+                        <button 
+                            class="nav-button"
+                            on:click={previousNote}
+                            disabled={currentNoteIndex === 0}
+                            title="Previous note"
+                        >
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        
+                        <div class="counter-menu-container">
+                            <!-- svelte-ignore a11y-click-events-have-key-events -->
+                            <!-- svelte-ignore a11y-no-static-element-interactions -->
+                            <span 
+                                class="counter-text clickable" 
+                                on:click={toggleNoteMenu}
+                                title="Click to select note"
+                            >
+                                {currentNoteIndex + 1} of {notes.length}
+                            </span>
+                            
+                            {#if showNoteMenu && notes.length > 1}
+                                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                <!-- svelte-ignore a11y-no-static-element-interactions -->
+                                <div class="note-menu-overlay" on:click={closeMenu}></div>
+                                <div class="note-menu">
+                                    {#each notes as note, index (note.id)}
+                                        <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                        <!-- svelte-ignore a11y-no-static-element-interactions -->
+                                        <div 
+                                            class="note-menu-item"
+                                            class:active={index === currentNoteIndex}
+                                            on:click={() => selectNote(index)}
+                                        >
+                                            <span class="note-menu-number">{index + 1}</span>
+                                            <span class="note-menu-title">{getNoteTitleFromContent(note.content)}</span>
+                                        </div>
+                                    {/each}
+                                </div>
+                            {/if}
+                        </div>
+                        
+                        <button 
+                            class="nav-button"
+                            on:click={nextNote}
+                            disabled={currentNoteIndex === notes.length - 1}
+                            title="Next note"
+                        >
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </button>
+                    </div>
+                    
+                    <div class="note-content-container">
+                        {#if editingContent}
+                            <textarea 
+                                class="textarea edit-content-textarea"
+                                bind:value={tempContent}
+                                on:keydown={handleContentKeydown}
+                                on:blur={saveContent}
+                                placeholder="Write your note in Markdown..."
+                            ></textarea>
+                            <div class="edit-hint">
+                                Press Escape to cancel, Ctrl+Enter (⌘+Enter on Mac) to save
+                            </div>
+                        {:else if currentNote}
+                            <!-- svelte-ignore a11y-click-events-have-key-events -->
+                            <!-- svelte-ignore a11y-no-static-element-interactions -->
+                            <div 
+                                class="note-content"
+                                class:editable={canEdit}
+                                on:click={() => canEdit && startEditContent()}
+                                title={canEdit ? "Click to edit content" : ""}
+                            >
+                                {@html renderedContent}
+                            </div>
+                        {/if}
                     </div>
                 {/if}
             </div>
-        {/if}
+        </div>
     </div>
-</aside>
+{/if}
 
 <style>
-    .scratchpad-sidebar {
-        background: var(--white);
-        border-right: 1px solid var(--gray-200);
-        border-top: 1px solid var(--gray-200);
+    /* NotesModal specific styles - using global styles from global.css */
+    
+    .modal-content {
+        max-width: 600px;
+        max-height: 80vh;
+        height: min(80vh, 700px);
+        box-shadow: var(--shadow-lg);
         display: flex;
         flex-direction: column;
-        height: 50%;
-        max-height: 50%;
-        width: 100%;
-        min-width: 240px;
-        max-width: 400px;
-        overflow: hidden;
     }
     
-    .sidebar-header {
-        padding: var(--space-5) var(--space-5) var(--space-4);
-        border-bottom: 1px solid var(--gray-200);
-        flex-shrink: 0;
+    .modal-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        min-height: 70px;
-        max-height: 70px;
-        height: 70px;
-    }
-    
-    .sidebar-header h2 {
-        margin: 0;
-        color: var(--gray-700);
-        font-size: 18px;
-        font-weight: 600;
-        font-family: var(--font-primary);
+        flex-shrink: 0;
     }
     
     .header-actions {
         display: flex;
         gap: var(--space-2);
+        align-items: center;
+    }
+    
+    .modal-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+        min-height: 0;
     }
     
     .btn {
@@ -459,23 +483,16 @@
         cursor: not-allowed;
     }
     
-    .material-symbols-outlined {
-        font-size: 16px;
-    }
-    
-    .sidebar-content {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        overflow: hidden;
-        min-height: 0;
-    }
-    
     .loading-state,
     .empty-state {
         text-align: center;
         padding: var(--space-8) var(--space-4);
         color: var(--gray-500);
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
     
     .loading-state p,
@@ -489,12 +506,23 @@
         color: var(--gray-400);
     }
     
+    .note-navigation {
+        padding: var(--space-3) var(--space-6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-3);
+        background: var(--gray-50);
+        border-bottom: 1px solid var(--gray-100);
+        flex-shrink: 0;
+    }
+    
     .nav-button {
         background: var(--gray-50);
         border: 1px solid transparent;
         border-radius: var(--radius-lg);
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -513,17 +541,6 @@
         cursor: not-allowed;
     }
     
-    .note-counter {
-        padding: var(--space-2) var(--space-5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: var(--space-3);
-        background: var(--gray-50);
-        border-bottom: 1px solid var(--gray-100);
-        flex-shrink: 0;
-    }
-    
     .counter-menu-container {
         position: relative;
         display: flex;
@@ -532,16 +549,16 @@
     }
     
     .counter-text {
-        font-size: 11px;
+        font-size: 12px;
         color: var(--gray-500);
         font-weight: 500;
-        min-width: 50px;
+        min-width: 60px;
         text-align: center;
     }
     
     .counter-text.clickable {
         cursor: pointer;
-        padding: var(--space-1) var(--space-2);
+        padding: var(--space-2) var(--space-3);
         border-radius: var(--radius-sm);
         transition: background-color var(--transition-normal);
     }
@@ -570,18 +587,18 @@
         border-radius: var(--radius-lg);
         box-shadow: var(--shadow-lg);
         z-index: 1000;
-        min-width: 200px;
-        max-width: 280px;
+        min-width: 240px;
+        max-width: 320px;
         max-height: 200px;
         overflow-y: auto;
-        margin-top: var(--space-1);
+        margin-top: var(--space-2);
     }
     
     .note-menu-item {
         display: flex;
         align-items: center;
         gap: var(--space-2);
-        padding: var(--space-2) var(--space-3);
+        padding: var(--space-3) var(--space-4);
         cursor: pointer;
         transition: background-color var(--transition-normal);
         border-bottom: 1px solid var(--gray-100);
@@ -601,10 +618,10 @@
     }
     
     .note-menu-number {
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 600;
         color: var(--gray-400);
-        min-width: 16px;
+        min-width: 20px;
         text-align: center;
     }
     
@@ -613,7 +630,7 @@
     }
     
     .note-menu-title {
-        font-size: 12px;
+        font-size: 13px;
         color: var(--gray-700);
         overflow: hidden;
         text-overflow: ellipsis;
@@ -636,46 +653,48 @@
     
     .note-content {
         flex: 1;
-        padding: var(--space-4) var(--space-5);
+        padding: var(--space-5) var(--space-6);
         overflow-y: auto;
-        font-size: 13px;
-        line-height: 1.5;
+        font-size: 14px;
+        line-height: 1.6;
         cursor: pointer;
         min-height: 0;
     }
     
     .note-content.editable:hover {
-        background: rgba(33, 150, 243, 0.05);
+        background: rgba(33, 150, 243, 0.03);
     }
     
     .edit-content-textarea {
         flex: 1;
-        margin: var(--space-4) var(--space-5);
-        padding: var(--space-3);
+        margin: var(--space-5) var(--space-6);
+        padding: var(--space-4);
         border: 2px solid var(--primary-color);
         border-radius: var(--radius-lg);
-        font-size: 13px;
+        font-size: 14px;
         font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-        line-height: 1.4;
+        line-height: 1.5;
         resize: none;
         outline: none;
         overflow-y: auto;
+        min-height: 0;
     }
     
     .edit-hint {
-        padding: var(--space-2) var(--space-5);
-        font-size: 11px;
+        padding: var(--space-3) var(--space-6);
+        font-size: 12px;
         color: var(--gray-500);
         background: var(--gray-50);
         text-align: center;
         flex-shrink: 0;
+        border-top: 1px solid var(--gray-100);
     }
     
     .textarea {
         background: var(--white);
         border: 1px solid var(--gray-300);
         border-radius: var(--radius-lg);
-        font-size: 13px;
+        font-size: 14px;
         transition: all var(--transition-normal);
         width: 100%;
         box-sizing: border-box;
@@ -689,74 +708,87 @@
     
     /* Markdown content styling */
     :global(.note-content h1) {
-        font-size: 16px;
+        font-size: 20px;
         font-weight: 600;
-        margin: 0 0 var(--space-3);
+        margin: 0 0 var(--space-4);
         color: var(--gray-800);
+        line-height: 1.3;
     }
     
     :global(.note-content h2) {
-        font-size: 15px;
+        font-size: 18px;
         font-weight: 600;
-        margin: var(--space-4) 0 var(--space-2);
+        margin: var(--space-5) 0 var(--space-3);
         color: var(--gray-700);
+        line-height: 1.3;
     }
     
     :global(.note-content h3) {
-        font-size: 14px;
+        font-size: 16px;
         font-weight: 600;
-        margin: var(--space-3) 0 var(--space-2);
+        margin: var(--space-4) 0 var(--space-2);
         color: var(--gray-700);
+        line-height: 1.3;
     }
     
     :global(.note-content p) {
-        margin: 0 0 var(--space-3);
+        margin: 0 0 var(--space-4);
         color: var(--gray-600);
+        line-height: 1.6;
     }
     
     :global(.note-content ul),
     :global(.note-content ol) {
-        margin: 0 0 var(--space-3);
-        padding-left: var(--space-4);
+        margin: 0 0 var(--space-4);
+        padding-left: var(--space-5);
     }
     
     :global(.note-content li) {
-        margin-bottom: var(--space-1);
+        margin-bottom: var(--space-2);
         color: var(--gray-600);
+        line-height: 1.6;
     }
     
     :global(.note-content code) {
         background: var(--gray-100);
-        padding: 2px 4px;
+        padding: 3px 6px;
         border-radius: var(--radius-sm);
-        font-size: 12px;
+        font-size: 13px;
         font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        color: var(--gray-800);
     }
     
     :global(.note-content pre) {
         background: var(--gray-100);
-        padding: var(--space-3);
+        padding: var(--space-4);
         border-radius: var(--radius-lg);
         overflow-x: auto;
-        margin: 0 0 var(--space-3);
+        margin: 0 0 var(--space-4);
+        border: 1px solid var(--gray-200);
     }
     
     :global(.note-content pre code) {
         background: none;
         padding: 0;
+        border: none;
     }
     
     :global(.note-content blockquote) {
-        border-left: 3px solid var(--primary-color);
-        padding-left: var(--space-3);
-        margin: 0 0 var(--space-3);
+        border-left: 4px solid var(--primary-color);
+        padding-left: var(--space-4);
+        margin: 0 0 var(--space-4);
         color: var(--gray-600);
         font-style: italic;
+        background: var(--gray-50);
+        padding-top: var(--space-3);
+        padding-bottom: var(--space-3);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
     }
     
     :global(.note-content a) {
         color: var(--primary-color);
         text-decoration: none;
+        font-weight: 500;
     }
     
     :global(.note-content a:hover) {
@@ -765,9 +797,62 @@
     
     :global(.note-content strong) {
         font-weight: 600;
+        color: var(--gray-800);
     }
     
     :global(.note-content em) {
         font-style: italic;
+    }
+    
+    :global(.note-content hr) {
+        border: none;
+        border-top: 1px solid var(--gray-200);
+        margin: var(--space-6) 0;
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 576px) {
+        .modal-backdrop {
+            padding: var(--space-4);
+        }
+        
+        .modal-content {
+            max-height: 80vh;
+            height: min(80vh, calc(100vh - 2 * var(--space-4)));
+        }
+        
+        .modal-header {
+            padding: var(--space-4) var(--space-5) var(--space-3);
+        }
+        
+        .note-navigation {
+            padding: var(--space-3) var(--space-5);
+        }
+        
+        .nav-button {
+            width: 36px;
+            height: 36px;
+        }
+        
+        .counter-text {
+            font-size: 13px;
+            min-width: 70px;
+        }
+        
+        .note-content {
+            padding: var(--space-4) var(--space-5);
+            font-size: 13px;
+        }
+        
+        .edit-content-textarea {
+            margin: var(--space-4) var(--space-5);
+            padding: var(--space-3);
+            font-size: 13px;
+        }
+        
+        .edit-hint {
+            padding: var(--space-3) var(--space-5);
+            font-size: 11px;
+        }
     }
 </style>
