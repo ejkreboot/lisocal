@@ -11,7 +11,6 @@
     export let calendarId: string
     export let canEdit: boolean = true
     export let shareToken: string | null = null
-    
     const dispatch = createEventDispatcher()
     
     let calendarGrid: CalendarDay[] = []
@@ -20,6 +19,12 @@
     let editText = ''
     let isSaving = false
     let editingEventId: string | null = null
+    
+    // Drag and drop state
+    let draggedEvent: CalendarEvent | null = null
+    let draggedFromDate: string | null = null
+    let isDragging = false
+    let dropTargetDay: CalendarDay | null = null
     
     // Tooltip functionality
     let tooltip = {
@@ -41,6 +46,30 @@
     
     onMount(() => {
         loadEvents()
+        
+        // Add global click handler to close editors when clicking outside
+        const handleGlobalClick = (event: Event) => {
+            if (editingCell && event.target instanceof HTMLElement) {
+                // Check if the click was on an input field or inside the calendar
+                const isInsideCalendar = event.target.closest('.calendar-grid, .calendar-agenda')
+                const isInputField = event.target.closest('.event-input, .agenda-event-input')
+                
+                // If clicking outside the calendar or not on an input field, close the editor
+                if (!isInsideCalendar || (!isInputField && !event.target.closest('.calendar-day, .agenda-day'))) {
+                    if (editText.trim()) {
+                        saveEvent()
+                    } else {
+                        cancelEdit()
+                    }
+                }
+            }
+        }
+        
+        document.addEventListener('click', handleGlobalClick)
+        
+        return () => {
+            document.removeEventListener('click', handleGlobalClick)
+        }
     })
     
     async function loadEvents() {
@@ -301,6 +330,16 @@
         isSaving = false
     }
     
+    function handleBlur() {
+        // If there's text content, save the event
+        if (editText.trim()) {
+            saveEvent()
+        } else {
+            // If empty, just cancel the edit
+            cancelEdit()
+        }
+    }
+    
     function handleKeydown(event: KeyboardEvent) {
         if (event.key === 'Enter') {
             event.preventDefault()
@@ -384,7 +423,7 @@
     function getEventStyle(event: CalendarEvent): string {
         if (event.isExternal && event.externalCalendarUrl) {
             const colors = getExternalCalendarColor(event.externalCalendarUrl)
-            return `background-color: transparent; border-width: 2px 0 0 0; border-style: solid; border-color: ${colors.bg};`
+            return `background-color: transparent; border-color: ${colors.bg};`
         }
         return ''
     }
@@ -407,17 +446,23 @@
             let style = ''
             if (eventObj?.isExternal && eventObj?.externalCalendarUrl) {
                 const colors = getExternalCalendarColor(eventObj.externalCalendarUrl)
-                style = `border-width: 2px 0 0 0; border-style: solid; border-color: ${colors.bg}; color: var(--gray-700);`
+                style = `border-color: ${colors.bg}; color: var(--gray-700);`
             } else {
-                style = 'border-width: 2px 0 0 0; border-style: solid; border-color: var(--primary-color); color: var(--gray-700);'
+                style = `border-color: var(--primary-color); color: var(--gray-700);`
             }
             
-            tooltip = {
-                visible: true,
-                text: tooltipText,
-                x: event.clientX,
-                y: event.clientY - 10,
-                style: style
+            // Find the closest event element (either .event or .agenda-event)
+            const eventElement = target.closest('.event, .agenda-event') as HTMLElement
+            if (eventElement) {
+                const rect = eventElement.getBoundingClientRect()
+                
+                tooltip = {
+                    visible: true,
+                    text: tooltipText,
+                    x: rect.left + rect.width / 2, // Center horizontally on the event
+                    y: rect.top - 5, // Position directly above the event
+                    style: style
+                }
             }
         }
     }
@@ -432,13 +477,122 @@
         }
     }
     
-    function moveTooltip(event: MouseEvent) {
-        if (tooltip.visible) {
-            tooltip = {
-                ...tooltip,
-                x: event.clientX,
-                y: event.clientY - 10
+
+    
+    // Drag and drop handlers
+    function handleDragStart(event: DragEvent, eventObj: CalendarEvent) {
+        if (!canEdit || eventObj.isExternal) {
+            event.preventDefault()
+            return
+        }
+        
+        draggedEvent = eventObj
+        draggedFromDate = eventObj.startDate
+        isDragging = true
+        
+        // Set drag effect
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move'
+            event.dataTransfer.setData('text/plain', eventObj.id)
+        }
+        
+        // Hide tooltip if visible
+        hideTooltip()
+    }
+    
+    function handleDragEnd(event: DragEvent) {
+        // Reset drag state
+        draggedEvent = null
+        draggedFromDate = null
+        isDragging = false
+        dropTargetDay = null
+    }
+    
+    function handleDragOver(event: DragEvent) {
+        if (!isDragging || !draggedEvent) return
+        
+        event.preventDefault()
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = 'move'
+        }
+    }
+    
+    function handleDragEnter(event: DragEvent, day: CalendarDay) {
+        if (!isDragging || !draggedEvent) return
+        
+        event.preventDefault()
+        dropTargetDay = day
+    }
+    
+    function handleDragLeave(event: DragEvent, day: CalendarDay) {
+        if (!isDragging || !draggedEvent) return
+        
+        // Only clear if we're actually leaving this specific day
+        if (dropTargetDay === day) {
+            dropTargetDay = null
+        }
+    }
+    
+    async function handleDrop(event: DragEvent, day: CalendarDay) {
+        if (!isDragging || !draggedEvent) return
+        
+        event.preventDefault()
+        dropTargetDay = null
+        
+        const newDate = formatDateForDb(day.date)
+        
+        // Don't do anything if dropping on the same date
+        if (newDate === draggedFromDate) {
+            handleDragEnd(event)
+            return
+        }
+        
+        try {
+            await updateEventDate(draggedEvent.id, newDate)
+            await loadEvents() // Reload to show the updated calendar
+            dispatch('eventMoved', { event: draggedEvent, newDate })
+        } catch (error) {
+            console.error('Error moving event:', error)
+        }
+        
+        handleDragEnd(event)
+    }
+    
+    async function updateEventDate(eventId: string, newDate: string) {
+        let error
+        
+        if (shareToken) {
+            // Use shared calendar API
+            try {
+                const response = await fetch(`/api/shared/events?shareToken=${shareToken}&eventId=${eventId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        start_date: newDate
+                    })
+                })
+                
+                if (!response.ok) {
+                    throw new Error('Failed to update event date')
+                }
+                error = null
+            } catch (err) {
+                error = err
             }
+        } else {
+            // Use regular Supabase client for authenticated users
+            const { error: updateError } = await supabase
+                .from('events')
+                .update({ start_date: newDate })
+                .eq('id', eventId)
+            
+            error = updateError
+        }
+        
+        if (error) {
+            throw error
         }
     }
 </script>
@@ -471,12 +625,18 @@
                             class:other-month={!day.isCurrentMonth}
                             class:today={day.isToday}
                             class:editing={editingCell?.row === row && editingCell?.col === col}
+                            class:drag-target={dropTargetDay === day}
+                            class:dragging={isDragging}
                             role="gridcell"
                             aria-label="{day.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}{day.events.length > 0 ? `, ${day.events.length} event${day.events.length === 1 ? '' : 's'}` : ', no events'}{canEdit ? ', click to add event' : ''}"
                             aria-selected={day.isToday}
                             tabindex={canEdit ? 0 : undefined}
                             on:click={() => canEdit && startEditing(row, col)}
                             on:keydown={(e) => canEdit && !editingCell && handleDayKeydown(e, row, col)}
+                            on:dragover={handleDragOver}
+                            on:dragenter={(e) => handleDragEnter(e, day)}
+                            on:dragleave={(e) => handleDragLeave(e, day)}
+                            on:drop={(e) => handleDrop(e, day)}
                         >
                             <div class="day-number">{day.dayNumber}</div>
                             
@@ -488,14 +648,25 @@
                                             class="event-input editing-inline"
                                             bind:value={editText}
                                             on:keydown={handleKeydown}
-                                            on:blur={saveEvent}
+                                            on:blur={handleBlur}
                                             on:click|stopPropagation
                                             placeholder="8A-9A Meeting or All day event"
                                             aria-label="Editing event: {event.title}. Enter time and title, or just title for all-day event. Press Enter to save, Escape to cancel."
                                         />
                                     {:else}
                                         <!-- Show normal event display -->
-                                        <div class="event" class:all-day={event.isAllDay} class:external={event.isExternal} style={getEventStyle(event)}>
+                                        <!-- svelte-ignore a11y-no-static-element-interactions -->
+                                        <div 
+                                            class="event" 
+                                            class:all-day={event.isAllDay} 
+                                            class:external={event.isExternal} 
+                                            class:dragging={draggedEvent?.id === event.id}
+                                            style={getEventStyle(event)}
+                                            draggable={canEdit && !event.isExternal}
+                                            role={canEdit && !event.isExternal ? "button" : "listitem"}
+                                            on:dragstart={(e) => handleDragStart(e, event)}
+                                            on:dragend={handleDragEnd}
+                                        >
                                             <!-- svelte-ignore a11y-click-events-have-key-events -->
                                             <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
                                             <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
@@ -503,7 +674,7 @@
                                                 class="event-content" 
                                                 role={canEdit ? "button" : undefined}
                                                 tabindex={canEdit ? 0 : undefined}
-                                                aria-label="{event.isAllDay ? 'All day event' : formatEventTime(event)}: {event.title}{event.isExternal ? ' (imported from external calendar)' : ''}{canEdit ? ', click to edit' : ''}"
+                                                aria-label="{event.isAllDay ? 'All day event' : formatEventTime(event)}: {event.title}{event.isExternal ? ' (imported from external calendar)' : ''}{canEdit ? ', click to edit or drag to move' : ''}"
                                                 on:click|stopPropagation={() => canEdit && startEditingEvent(event, row, col)}
                                                 on:keydown={(e) => {
                                                     if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
@@ -521,7 +692,6 @@
                                                     tabindex="0"
                                                     on:mouseenter={(e) => showTooltip(e, event.title, formatEventTime(event), event)}
                                                     on:mouseleave={hideTooltip}
-                                                    on:mousemove={moveTooltip}
                                                 >{event.title}</div>
                                             </div>
                                             {#if canEdit}
@@ -549,7 +719,7 @@
                                         class="event-input"
                                         bind:value={editText}
                                         on:keydown={handleKeydown}
-                                        on:blur={saveEvent}
+                                        on:blur={handleBlur}
                                         on:click|stopPropagation
                                         placeholder="8A-9A Meeting or All day event"
                                         aria-label="Event details for {day.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}. Enter time and title, or just title for all-day event. Press Enter to save, Escape to cancel."
@@ -576,8 +746,14 @@
             class:today={day.isToday}
             class:has-events={hasEvents}
             class:editing={isEditing}
+            class:drag-target={dropTargetDay === day}
+            class:dragging={isDragging}
             role="listitem"
             aria-label="{day.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}{dayEvents.length > 0 ? `, ${dayEvents.length} event${dayEvents.length === 1 ? '' : 's'}` : ', no events'}"
+            on:dragover={handleDragOver}
+            on:dragenter={(e) => handleDragEnter(e, day)}
+            on:dragleave={(e) => handleDragLeave(e, day)}
+            on:drop={(e) => handleDrop(e, day)}
         >
             <div class="agenda-date">
                 <div class="agenda-day-number">{day.dayNumber}</div>
@@ -594,7 +770,7 @@
                                     class="agenda-event-input editing-inline"
                                     bind:value={editText}
                                     on:keydown={handleKeydown}
-                                    on:blur={saveEvent}
+                                    on:blur={handleBlur}
                                     on:click|stopPropagation
                                     placeholder="8A-9A Meeting or All day event"
                                     aria-label="Editing event: {event.title}. Enter time and title, or just title for all-day event. Press Enter to save, Escape to cancel."
@@ -604,14 +780,17 @@
                                 <!-- svelte-ignore a11y-click-events-have-key-events -->
                                 <!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
                                 <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+                                <!-- svelte-ignore a11y-no-static-element-interactions -->
                                 <div 
                                     class="agenda-event" 
                                     class:all-day={event.isAllDay} 
                                     class:external={event.isExternal}
+                                    class:dragging={draggedEvent?.id === event.id}
                                     style={getEventStyle(event)}
                                     role={canEdit ? "button" : "listitem"}
                                     tabindex={canEdit ? 0 : undefined}
-                                    aria-label="{event.isAllDay ? 'All day event' : formatEventTime(event)}: {event.title}{event.isExternal ? ' (imported from external calendar)' : ''}{canEdit ? ', click to edit' : ''}"
+                                    draggable={canEdit && !event.isExternal}
+                                    aria-label="{event.isAllDay ? 'All day event' : formatEventTime(event)}: {event.title}{event.isExternal ? ' (imported from external calendar)' : ''}{canEdit ? ', click to edit or drag to move' : ''}"
                                     on:click={() => canEdit && startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7)}
                                     on:keydown={(e) => {
                                         if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
@@ -619,6 +798,8 @@
                                             startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7);
                                         }
                                     }}
+                                    on:dragstart={(e) => handleDragStart(e, event)}
+                                    on:dragend={handleDragEnd}
                                 >
                                     <div class="agenda-event-content">
                                         {#if !event.isAllDay && event.startTime}
@@ -630,7 +811,6 @@
                                             tabindex="0"
                                             on:mouseenter={(e) => showTooltip(e, event.title, formatEventTime(event), event)}
                                             on:mouseleave={hideTooltip}
-                                            on:mousemove={moveTooltip}
                                         >{event.title}</div>
                                     </div>
                                     {#if canEdit}
@@ -674,7 +854,7 @@
                             class="agenda-event-input"
                             bind:value={editText}
                             on:keydown={handleKeydown}
-                            on:blur={saveEvent}
+                            on:blur={handleBlur}
                             on:click|stopPropagation
                             placeholder="8A-9A Meeting or All day event"
                             aria-label="Event details for {day.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}. Enter time and title, or just title for all-day event. Press Enter to save, Escape to cancel."
@@ -698,40 +878,20 @@
 
 <style>
     /* Component-specific calendar styles - most styles now in global.css */
-    
-    /* Typography overrides for component-specific elements */
-    .day-header,
-    .day-number,
-    .agenda-day-number,
-    .agenda-day-name {
-        font-family: var(--font-primary);
-    }
-    
-    .event,
-    .event-title,
-    .event-time,
-    .agenda-event,
-    .agenda-event-title,
-    .agenda-event-time,
-    .event-input,
-    .agenda-event-input,
-    .agenda-add-event {
-        font-family: var(--font-secondary);
-    }
+  
 
     /* Calendar grid specific layout */
     .calendar-grid {
         width: 100%;
         min-width: 800px;
-        border: 1px solid var(--gray-200);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         overflow: hidden;
         background: var(--white);
     }
     
     .calendar-header {
-        background: var(--gray-100);
-        border-bottom: 1px solid var(--gray-200);
+        background: var(--white);
+        border-bottom: 1px solid var(--gray-50);
         width: 100%;
     }
     
@@ -746,8 +906,8 @@
         text-align: center;
         font-weight: 600;
         font-size: 14px;
-        color: var(--gray-600);
-        background: var(--gray-100);
+        color: var(--gray-400);
+        background: var(--white);
         width: 100%;
         display: flex;
         align-items: center;
@@ -768,8 +928,8 @@
     .calendar-day {
         min-height: 110px;
         min-width: 10px;
-        border-right: 1px solid var(--gray-200);
-        border-bottom: 1px solid var(--gray-200);
+        border-right: .5px solid var(--gray-100);
+        border-bottom: .5px solid var(--gray-200);
         padding: var(--space-2);
         position: relative;
         cursor: pointer;
@@ -797,7 +957,6 @@
     
     .calendar-day.editing {
         background: var(--primary-ultra-light);
-        box-shadow: inset 0 0 0 2px var(--primary-color);
     }
     
     .calendar-day:nth-child(7n) {
@@ -821,8 +980,8 @@
     .event-input {
         width: 100%;
         max-width: 100%;
-        border: 1px solid var(--primary-color);
-        border-radius: var(--radius-sm);
+        border: 0px solid var(--primary-color);
+        border-radius: var(--radius-small-default);
         padding: var(--space-1) var(--space-2);
         font-size: 12px;
         background: var(--white);
@@ -838,7 +997,7 @@
     }
 
     .event-input.editing-inline {
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-small-default);
         padding: 2px 6px;
         font-size: 12px;
         border: 1px solid var(--primary-color);
@@ -853,7 +1012,7 @@
     
     .calendar-agenda {
         background: var(--white);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         overflow: hidden;
         border: 1px solid var(--gray-200);
     }
@@ -994,7 +1153,7 @@
         opacity: 0.7;
         transition: opacity var(--transition-normal);
         flex-shrink: 0;
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-small-default);
     }
     
     .agenda-delete-event:hover {
@@ -1012,7 +1171,7 @@
         padding: var(--space-1) var(--space-2);
         display: inline-flex;
         align-items: center;
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-small-default);
     }
     
     .agenda-empty {
@@ -1024,7 +1183,7 @@
         background: none;
         border: 2px dashed var(--gray-300);
         color: var(--gray-600);
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-small-default);
         padding: var(--space-2) var(--space-3);
         cursor: pointer;
         font-size: 14px;
@@ -1051,7 +1210,7 @@
     .agenda-event-input {
         width: 100%;
         border: 2px solid var(--primary-color);
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-small-default);
         padding: var(--space-2) var(--space-3);
         font-size: 14px;
         background: var(--white);
@@ -1122,11 +1281,11 @@
     /* Custom tooltip - component specific */
     .custom-tooltip {
         position: fixed;
-        background: var(--white);
+        background: white;
         border: none;
         color: var(--gray-700);
         padding: var(--space-2) var(--space-3);
-        border-radius: 0;
+        border-radius: var(--radius-small-default);
         font-family: var(--font-secondary);
         font-size: 14px;
         font-weight: 500;
@@ -1135,8 +1294,61 @@
         z-index: 1000;
         pointer-events: none;
         box-shadow: var(--shadow-sm);
-        transform: translateX(-50%);
+        transform: translateX(-50%) translateY(-100%);
         opacity: 1;
         transition: opacity var(--transition-fast) ease-out;
+    }
+    
+    /* Drag and drop styles */
+    .calendar-day.drag-target {
+        background: var(--primary-ultra-light) !important;
+        box-shadow: inset 0 0 0 2px var(--primary-color);
+    }
+    
+    .agenda-day.drag-target {
+        background: var(--primary-ultra-light) !important;
+        box-shadow: inset 0 0 0 2px var(--primary-color);
+    }
+    
+    .event.dragging {
+        opacity: 0.5;
+        transform: scale(0.98);
+        cursor: grabbing !important;
+    }
+    
+    .agenda-event.dragging {
+        opacity: 0.5;
+        transform: scale(0.98);
+        cursor: grabbing !important;
+    }
+    
+    .calendar-day.dragging {
+        cursor: copy;
+    }
+    
+    .agenda-day.dragging {
+        cursor: copy;
+    }
+    
+    /* Add grab cursor for draggable events */
+    .event[draggable="true"]:not(.dragging) {
+        cursor: grab;
+    }
+    
+    .agenda-event[draggable="true"]:not(.dragging) {
+        cursor: grab;
+    }
+    
+    /* Improve visual feedback when hovering draggable events */
+    .event[draggable="true"]:hover:not(.dragging) {
+        transform: scale(1.02);
+        box-shadow: var(--shadow-sm);
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    
+    .agenda-event[draggable="true"]:hover:not(.dragging) {
+        transform: scale(1.01);
+        box-shadow: var(--shadow-sm);
+        transition: transform var(--transition-fast), box-shadow var(--transition-fast);
     }
 </style>

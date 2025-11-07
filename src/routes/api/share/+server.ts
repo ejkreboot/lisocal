@@ -49,7 +49,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
     
     return json({
         shareToken: sharedLink.share_token,
-        shareUrl: `/share/${sharedLink.share_token}`,
+        shareUrl: `/?share=${sharedLink.share_token}`,
         permissions: sharedLink.permissions,
         expiresAt: sharedLink.expires_at
     })
@@ -87,7 +87,7 @@ export const GET: RequestHandler = async ({ locals }) => {
         sharedLinks: sharedLinks.map(link => ({
             id: link.id,
             shareToken: link.share_token,
-            shareUrl: `/share/${link.share_token}`,
+            shareUrl: `/?share=${link.share_token}`,
             permissions: link.permissions,
             createdAt: link.created_at,
             expiresAt: link.expires_at

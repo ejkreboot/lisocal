@@ -443,7 +443,7 @@
     
     .btn {
         border: none;
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         cursor: pointer;
         font-size: 13px;
         font-weight: 500;
@@ -520,7 +520,7 @@
     .nav-button {
         background: var(--gray-50);
         border: 1px solid transparent;
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         width: 32px;
         height: 32px;
         display: flex;
@@ -559,7 +559,7 @@
     .counter-text.clickable {
         cursor: pointer;
         padding: var(--space-2) var(--space-3);
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-small-default);
         transition: background-color var(--transition-normal);
     }
     
@@ -584,7 +584,7 @@
         transform: translateX(-50%);
         background: var(--white);
         border: 1px solid var(--gray-200);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         box-shadow: var(--shadow-lg);
         z-index: 1000;
         min-width: 240px;
@@ -670,7 +670,7 @@
         margin: var(--space-5) var(--space-6);
         padding: var(--space-4);
         border: 2px solid var(--primary-color);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         font-size: 14px;
         font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
         line-height: 1.5;
@@ -693,7 +693,7 @@
     .textarea {
         background: var(--white);
         border: 1px solid var(--gray-300);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         font-size: 14px;
         transition: all var(--transition-normal);
         width: 100%;
@@ -752,7 +752,7 @@
     :global(.note-content code) {
         background: var(--gray-100);
         padding: 3px 6px;
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-small-default);
         font-size: 13px;
         font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
         color: var(--gray-800);
@@ -761,7 +761,7 @@
     :global(.note-content pre) {
         background: var(--gray-100);
         padding: var(--space-4);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         overflow-x: auto;
         margin: 0 0 var(--space-4);
         border: 1px solid var(--gray-200);
@@ -782,7 +782,7 @@
         background: var(--gray-50);
         padding-top: var(--space-3);
         padding-bottom: var(--space-3);
-        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+        border-radius: var(--radius-small-default) var(--radius-small-default) var(--radius-small-default) 0;
     }
     
     :global(.note-content a) {

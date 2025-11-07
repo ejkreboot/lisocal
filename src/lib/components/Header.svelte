@@ -88,7 +88,10 @@
         showMobileMenu = false
     }
 
-    let canEdit = $derived( $user || (data?.sharedCalendar && data?.sharedCalendar.permissions === 'edit'))
+    // Share link permissions take precedence to allow testing of view-only links
+    let canEdit = $derived(data?.sharedCalendar 
+        ? data?.sharedCalendar.permissions === 'edit'
+        : !!$user)
 
 </script>
 
@@ -175,21 +178,23 @@
                         >
                             <span class="material-symbols-outlined" style="font-size: 16px;">sticky_note_2</span>
                         </button>
-                        <button 
-                            onclick={() => showExternalCalendarModal = true} 
-                            class="external-cal-button icon-button"
-                            title="External Calendars"
-                        >
-                            <span class="material-symbols-outlined" style="font-size: 16px;">captive_portal</span>
-                        </button>
-                        <button 
-                            onclick={() => showShareDialog = true} 
-                            class="share-button icon-button" 
-                            disabled={!calendarName}
-                            title="Share Calendar"
-                        >
-                            <span class="material-symbols-outlined" style="font-size: 16px;">share</span>
-                        </button>
+                        {#if canEdit}
+                            <button 
+                                onclick={() => showExternalCalendarModal = true} 
+                                class="external-cal-button icon-button"
+                                title="External Calendars"
+                            >
+                                <span class="material-symbols-outlined" style="font-size: 16px;">captive_portal</span>
+                            </button>
+                            <button 
+                                onclick={() => showShareDialog = true} 
+                                class="share-button icon-button" 
+                                disabled={!calendarName}
+                                title="Share Calendar"
+                            >
+                                <span class="material-symbols-outlined" style="font-size: 16px;">share</span>
+                            </button>
+                        {/if}
                         <button 
                             onclick={handleSignOut} 
                             class="logout-button icon-button"
@@ -234,7 +239,7 @@
                                 <span class="material-symbols-outlined">sticky_note_2</span>
                                 Scratchpad
                             </button>
-                            {#if $user}
+                            {#if canEdit}
                                 <button 
                                     onclick={() => { showExternalCalendarModal = true; closeMobileMenu(); }} 
                                     class="mobile-menu-item"
@@ -250,6 +255,8 @@
                                     <span class="material-symbols-outlined">share</span>
                                     Share Calendar
                                 </button>
+                            {/if}
+                            {#if $user}
                                 <button 
                                     onclick={() => { handleSignOut(); closeMobileMenu(); }} 
                                     class="mobile-menu-item"
@@ -346,7 +353,7 @@
         font-size: 14px;
         cursor: pointer;
         padding: var(--space-1) var(--space-2);
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-small-default);
         transition: all var(--transition-normal);
         font-family: inherit;
     }
@@ -361,7 +368,7 @@
         color: var(--gray-700);
         font-size: 14px;
         border: 2px solid var(--primary-color);
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-small-default);
         padding: var(--space-1) var(--space-2);
         background: var(--white);
         outline: none;
@@ -374,7 +381,7 @@
         font-weight: 500;
         background: var(--primary-light);
         padding: 2px var(--space-2);
-        border-radius: 12px;
+        border-radius: var(--radius-small-default)px;
         font-size: 12px;
     }
 
@@ -402,7 +409,7 @@
         color: var(--gray-600);
         border: 1px solid transparent;
         padding: 10px;
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         cursor: pointer;
         transition: all var(--transition-normal);
         margin-right: var(--space-2);
@@ -511,7 +518,7 @@
         right: 0;
         background: var(--white);
         border: 1px solid var(--gray-200);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         box-shadow: var(--shadow-md);
         min-width: 200px;
         z-index: 1000;
@@ -532,15 +539,15 @@
         text-align: left;
         cursor: pointer;
         transition: background-color var(--transition-normal);
-        border-radius: 0;
+        border-radius: var(--radius-small-default);
     }
     
     .mobile-menu-item:first-child {
-        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        border-radius: var(--radius-small-default) var(--radius-small-default) 0 0;
     }
     
     .mobile-menu-item:last-child {
-        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        border-radius: var(--radius-small-default) 0 var(--radius-small-default) var(--radius-small-default);
     }
     
     .mobile-menu-item:hover:not(:disabled) {

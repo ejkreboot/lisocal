@@ -53,11 +53,9 @@ export const handle: Handle = async ({ event, resolve }) => {
         }
     }
 
-    // Check for shared link token in URL when no authenticated user present
+    // Check for shared link token in URL
     const url = new URL(event.request.url)
-    const shareToken = url.searchParams.get('share') || url.pathname.split('/').find(segment => 
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
-    )
+    const shareToken = url.searchParams.get('share')
 
     let sharedCalendar = null
 

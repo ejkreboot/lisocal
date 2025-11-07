@@ -71,7 +71,10 @@
     }
     
     $: monthName = getMonthName(currentMonth)
-    $: canEdit = !!$user || (data.sharedCalendar && data.sharedCalendar.permissions === 'edit')
+    // Share link permissions take precedence to allow testing of view-only links
+    $: canEdit = data.sharedCalendar 
+        ? data.sharedCalendar.permissions === 'edit'
+        : !!$user
     $: calendarId = userCalendar?.id || data.sharedCalendar?.id
 
 </script>
@@ -195,7 +198,7 @@
     .page-wrapper {
         display: flex;
         min-height: calc(100vh - 60px);
-        background: var(--gray-50);
+        background: transparent;
     }
     
     .sidebar-container {
@@ -242,9 +245,9 @@
     }
     
     .nav-button {
-        background: var(--gray-50);
+        background: transparent;
         border: 1px solid transparent;
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         width: 36px;
         height: 36px;
         display: flex;
@@ -275,10 +278,10 @@
     }
     
     .today-button {
-        background: #eff6ff;
+        background: transparent;
         color: #2563eb;
         border: 1px solid transparent;
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         padding: var(--space-2) var(--space-4);
         cursor: pointer;
         font-size: 14px;
@@ -301,7 +304,7 @@
         align-items: center;
         padding: 60px var(--space-5);
         background: var(--white);
-        border-radius: var(--radius-xl);
+        border-radius: var(--radius-small-default);
         box-shadow: var(--shadow-sm);
     }
     
@@ -312,9 +315,8 @@
     
     .calendar-main {
         flex: 1;
-        padding: var(--space-6);
-        padding-top: 40px;
-        max-width: 1200px;
+        padding: 20px;
+        background: var(--white);
         margin: 0 auto;
         width: 100%;
         box-sizing: border-box;
@@ -324,7 +326,7 @@
         text-align: center;
         padding: 60px var(--space-5);
         background: var(--white);
-        border-radius: var(--radius-xl);
+        border-radius: var(--radius-small-default);
         box-shadow: var(--shadow-sm);
     }
     
@@ -342,7 +344,7 @@
     /* Landing page styles */
     .landing-page {
         background: var(--white);
-        border-radius: var(--radius-xl);
+        border-radius: var(--radius-small-default);
         box-shadow: var(--shadow-sm);
         overflow: hidden;
     }
@@ -383,7 +385,7 @@
         background: var(--primary-color);
         color: var(--white);
         padding: var(--space-3) var(--space-6);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         text-decoration: none;
         font-weight: 600;
         font-size: 16px;

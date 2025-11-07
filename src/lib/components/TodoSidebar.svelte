@@ -668,7 +668,7 @@
         gap: var(--space-2);
         padding: var(--space-2) var(--space-3);
         border: 1px solid var(--gray-200);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         background: var(--white);
         transition: all var(--transition-normal);
         font-size: 13px;
@@ -729,7 +729,7 @@
         width: 18px;
         height: 18px;
         border: 2px solid var(--gray-300);
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-small-default);
         background: var(--white);
         display: flex;
         align-items: center;
@@ -776,7 +776,7 @@
         cursor: pointer;
         padding: var(--space-1) var(--space-2);
         margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-small-default);
         transition: background-color var(--transition-normal);
     }
     
@@ -805,7 +805,7 @@
         padding: var(--space-1);
         font-size: 16px;
         font-weight: bold;
-        border-radius: var(--radius-sm);
+        border-radius: var(--radius-small-default);
         transition: all var(--transition-normal);
         flex-shrink: 0;
         line-height: 1;
@@ -848,7 +848,7 @@
         background: var(--gray-800);
         color: var(--white);
         padding: var(--space-2) var(--space-3);
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-small-default);
         font-size: 12px;
         max-width: 300px;
         word-wrap: break-word;

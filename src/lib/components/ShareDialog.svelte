@@ -294,7 +294,7 @@
     
     .dialog-content {
         background: var(--white);
-        border-radius: var(--radius-xl);
+        border-radius: var(--radius-small-default);
         width: 90%;
         max-width: 500px;
         max-height: 80vh;
@@ -332,7 +332,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: var(--radius-md);
+        border-radius: var(--radius-small-default);
         transition: all var(--transition-normal);
     }
     
@@ -361,7 +361,7 @@
         width: 100%;
         padding: 8px 12px;
         border: 1px solid #ddd;
-        border-radius: 6px;
+        border-radius: var(--radius-small-default)px;
         font-size: 14px;
         background: white;
     }
@@ -371,7 +371,7 @@
         background: #2196f3;
         color: white;
         border: none;
-        border-radius: 6px;
+        border-radius: var(--radius-small-default)px;
         padding: 12px 16px;
         font-size: 14px;
         font-weight: 500;
@@ -393,7 +393,7 @@
         background: #ffebee;
         color: #c62828;
         padding: 8px 12px;
-        border-radius: 6px;
+        border-radius: var(--radius-small-default)px;
         font-size: 14px;
         margin-bottom: 16px;
     }
@@ -401,7 +401,7 @@
     .share-result {
         background: #f8f9fa;
         padding: 16px;
-        border-radius: 8px;
+        border-radius: var(--radius-small-default)px;
         margin-bottom: 20px;
     }
     
@@ -423,7 +423,7 @@
         flex: 1;
         padding: 8px 12px;
         border: 1px solid #ddd;
-        border-radius: 6px;
+        border-radius: var(--radius-small-default)px;
         font-size: 13px;
         background: white;
         font-family: monospace;
@@ -433,7 +433,7 @@
         background: #4caf50;
         color: white;
         border: none;
-        border-radius: 6px;
+        border-radius: var(--radius-small-default)px;
         padding: 8px 16px;
         font-size: 12px;
         font-weight: 500;
@@ -460,7 +460,7 @@
     .toggle-existing {
         background: none;
         border: 1px solid #ddd;
-        border-radius: 6px;
+        border-radius: var(--radius-small-default)px;
         padding: 8px 12px;
         font-size: 14px;
         cursor: pointer;
@@ -482,7 +482,7 @@
     .link-item {
         background: #f8f9fa;
         border: 1px solid #e0e0e0;
-        border-radius: 6px;
+        border-radius: var(--radius-small-default)px;
         padding: 12px;
         margin-bottom: 8px;
         display: flex;
@@ -496,7 +496,7 @@
         color: #2196f3;
         background: #f0f8ff;
         padding: 4px 8px;
-        border-radius: 4px;
+        border-radius: var(--radius-small-default)px;
         border: 1px solid #e3f2fd;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -531,7 +531,7 @@
         background: #e0e0e0;
         color: #666;
         padding: 2px 6px;
-        border-radius: 10px;
+        border-radius: var(--radius-small-default)px;
         font-size: 11px;
         text-transform: uppercase;
         width: fit-content;
@@ -568,7 +568,7 @@
         background: #2196f3;
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: var(--radius-small-default)px;
         padding: 6px 12px;
         font-size: 12px;
         cursor: pointer;
@@ -583,7 +583,7 @@
         background: #f44336;
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: var(--radius-small-default)px;
         padding: 6px 12px;
         font-size: 12px;
         cursor: pointer;

@@ -4,12 +4,12 @@
 	"description": "A zero friction personal planner",
 	"icons": [
 		{
-			"src": "/logo-250.png",
+			"src": "/logo_250.png",
 			"sizes": "250x250",
 			"type": "image/png"
 		},
 		{
-			"src": "/logo-500.png",
+			"src": "/logo_500.png",
 			"sizes": "500x500",
 			"type": "image/png"
 		}

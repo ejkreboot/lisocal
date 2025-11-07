@@ -406,7 +406,7 @@
         color: var(--white);
         border: none;
         padding: var(--space-3) var(--space-6);
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-small-default);
         font-size: 14px;
         font-weight: 500;
         cursor: pointer;
@@ -431,7 +431,7 @@
         color: #374151;
         border: 1px solid #d1d5db;
         padding: 8px 12px;
-        border-radius: 6px;
+        border-radius: var(--radius-small-default)px;
         font-size: 12px;
         cursor: pointer;
         display: flex;
@@ -480,13 +480,13 @@
         padding: 16px;
         background: #f9fafb;
         border: 1px solid #e5e7eb;
-        border-radius: 8px;
+        border-radius: var(--radius-small-default)px;
     }
     
     .calendar-color-indicator {
         width: 16px;
         height: 16px;
-        border-radius: 50%;
+        border-radius: var(--radius-small-default)%;
         flex-shrink: 0;
         border: 2px solid white;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -525,7 +525,7 @@
         background: none;
         border: 1px solid #d1d5db;
         padding: 8px;
-        border-radius: 6px;
+        border-radius: var(--radius-small-default)px;
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -555,7 +555,7 @@
         height: 16px;
         border: 2px solid #f3f4f6;
         border-top: 2px solid #2563eb;
-        border-radius: 50%;
+        border-radius: var(--radius-small-default)%;
         animation: spin 1s linear infinite;
     }
     

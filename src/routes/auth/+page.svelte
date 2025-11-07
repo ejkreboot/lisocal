@@ -230,7 +230,7 @@
     
     .auth-card {
         background: var(--white);
-        border-radius: var(--radius-xl);
+        border-radius: var(--radius-small-default);
         box-shadow: var(--shadow-md);
         max-width: 400px;
         width: 100%;
@@ -338,7 +338,7 @@
     
     .message {
         padding: 12px 16px;
-        border-radius: 6px;
+        border-radius: var(--radius-small-default)px;
         font-size: 14px;
         text-align: center;
     }
@@ -389,7 +389,7 @@
     @media (max-width: 480px) {
         .auth-card {
             margin: 0;
-            border-radius: 0;
+            border-radius: var(--radius-small-default);
             min-height: 100vh;
         }
         
