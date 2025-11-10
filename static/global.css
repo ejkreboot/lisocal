@@ -1,5 +1,3 @@
-/* lisocal Global Styles */
-
 /* CSS Variables for consistent theming */
 :root {
   /* Colors */
@@ -113,6 +111,29 @@ body {
 .text-gray-600 { color: var(--gray-600); }
 .text-gray-700 { color: var(--gray-700); }
 .text-gray-800 { color: var(--gray-800); }
+
+/* Animation */
+/* --- Fade & Flow signature animation --- */
+
+@keyframes fadeFlowIn {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.75);
+    filter: blur(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+
+/* Apply when element is added */
+.event {
+  animation: fadeFlowIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 
 /* Background utilities */
 .bg-white { background: var(--white); }

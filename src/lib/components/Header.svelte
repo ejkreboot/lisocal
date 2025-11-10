@@ -4,6 +4,7 @@
     import ExternalCalendarModal from '$lib/components/ExternalCalendarModal.svelte'
     import TodoModal from '$lib/components/TodoModal.svelte'
     import NotesModal from '$lib/components/NotesModal.svelte'
+    import PomodoroTimer from '$lib/components/PomodoroTimer.svelte'
 
     let { data, calendarName, calendarId } = $props();
 
@@ -14,6 +15,7 @@
     let showMobileMenu = $state(false)
     let showShareDialog = $state(false)
     let showExternalCalendarModal = $state(false)
+    let showPomodoroTimer = $state(false)
 
     function startEditingTitle() {
         if (!$user || !calendarName) return
@@ -178,6 +180,13 @@
                         >
                             <span class="material-symbols-outlined" style="font-size: 16px;">sticky_note_2</span>
                         </button>
+                        <button 
+                            onclick={() => showPomodoroTimer = true} 
+                            class="pomodoro-button icon-button"
+                            title="Pomodoro Timer"
+                        >
+                            <span class="material-symbols-outlined" style="font-size: 16px;">timer</span>
+                        </button>
                         {#if canEdit}
                             <button 
                                 onclick={() => showExternalCalendarModal = true} 
@@ -239,6 +248,13 @@
                                 <span class="material-symbols-outlined">sticky_note_2</span>
                                 Scratchpad
                             </button>
+                            <button 
+                                onclick={() => { showPomodoroTimer = true; closeMobileMenu(); }} 
+                                class="mobile-menu-item"
+                            >
+                                <span class="material-symbols-outlined">timer</span>
+                                Pomodoro Timer
+                            </button>
                             {#if canEdit}
                                 <button 
                                     onclick={() => { showExternalCalendarModal = true; closeMobileMenu(); }} 
@@ -298,6 +314,10 @@
     calendarId={calendarId || ''}
     shareToken={data?.sharedCalendar?.shareToken || null}
     on:close={() => showNotesModal = false}
+/>
+
+<PomodoroTimer 
+    bind:isOpen={showPomodoroTimer}
 />
 
     <style>
@@ -459,6 +479,16 @@
     .notes-button:hover {
         background: #e0f2fe;
         color: #0369a1;
+    }
+    
+    .pomodoro-button {
+        background: #fdf9e9;
+        color: #d97706;
+    }
+    
+    .pomodoro-button:hover {
+        background: #fde68a;
+        color: #b45309;
     }
     
     .external-cal-button {
