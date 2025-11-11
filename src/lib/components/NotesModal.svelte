@@ -382,7 +382,10 @@
                             <textarea 
                                 class="textarea edit-content-textarea"
                                 bind:value={tempContent}
-                                on:keydown={handleContentKeydown}
+                                on:keydown={(e) => {
+                                    e.stopPropagation();
+                                    handleContentKeydown(e);
+                                }}
                                 on:blur={saveContent}
                                 placeholder="Write your note in Markdown..."
                             ></textarea>

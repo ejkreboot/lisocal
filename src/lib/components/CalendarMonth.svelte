@@ -351,8 +351,13 @@
     }
     
     function handleDayKeydown(event: KeyboardEvent, row: number, col: number) {
-        // If user starts typing a letter/number, start editing and capture the input
-        if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        // Only intercept keys if we're not already editing and the target is not an input field
+        const target = event.target as HTMLElement
+        const isInputField = target.tagName === 'INPUT' || target.closest('.event-input, .agenda-event-input')
+        
+        // If user starts typing a letter/number/space, start editing and capture the input
+        // but only if we're not already in an input field
+        if (!isInputField && event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
             event.preventDefault()
             startEditing(row, col)
             // Set the initial text to the typed character
@@ -547,17 +552,58 @@
             return
         }
         
+        // Store original event data for potential rollback
+        const originalEvent = { ...draggedEvent }
+        const originalDate = draggedFromDate
+        
+        // Optimistically update the local state immediately
+        updateEventInLocalState(draggedEvent.id, newDate)
+        
         try {
+            // Update the database in the background
             await updateEventDate(draggedEvent.id, newDate)
-            await loadEvents() // Reload to show the updated calendar
             dispatch('eventMoved', { event: draggedEvent, newDate })
         } catch (error) {
             console.error('Error moving event:', error)
+            // Revert the optimistic update if database update fails
+            if (originalDate) {
+                updateEventInLocalState(draggedEvent.id, originalDate)
+            }
         }
         
         handleDragEnd(event)
     }
     
+    function updateEventInLocalState(eventId: string, newDate: string) {
+        // Find and update the event in the events array
+        const eventIndex = events.findIndex(e => e.id === eventId)
+        if (eventIndex === -1) return
+        
+        // Update the event's date
+        events[eventIndex].startDate = newDate
+        
+        // Redistribute events to calendar days
+        calendarGrid = calendarGrid.map(day => ({
+            ...day,
+            events: events
+                .filter(event => event.startDate === formatDateForDb(day.date))
+                .sort((a, b) => {
+                    // All-day events should appear first
+                    if (a.isAllDay && !b.isAllDay) return -1
+                    if (!a.isAllDay && b.isAllDay) return 1
+                    
+                    // Among scheduled events, sort by start time
+                    if (!a.isAllDay && !b.isAllDay) {
+                        if (a.startTime && b.startTime) {
+                            return a.startTime.localeCompare(b.startTime)
+                        }
+                    }
+                    
+                    return 0
+                })
+        }))
+    }
+
     async function updateEventDate(eventId: string, newDate: string) {
         let error
         
@@ -647,7 +693,7 @@
                                         <input 
                                             class="event-input editing-inline"
                                             bind:value={editText}
-                                            on:keydown={handleKeydown}
+                                            on:keydown|stopPropagation={handleKeydown}
                                             on:blur={handleBlur}
                                             on:click|stopPropagation
                                             placeholder="8A-9A Meeting or All day event"
@@ -678,8 +724,14 @@
                                                 on:click|stopPropagation={() => canEdit && startEditingEvent(event, row, col)}
                                                 on:keydown={(e) => {
                                                     if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
-                                                        e.preventDefault();
-                                                        startEditingEvent(event, row, col);
+                                                        // Only prevent default if we're not in an input field
+                                                        const target = e.target as HTMLElement;
+                                                        const isInInputField = target.tagName === 'INPUT' || target.closest('.event-input, .agenda-event-input');
+                                                        
+                                                        if (!isInInputField && !editingCell) {
+                                                            e.preventDefault();
+                                                            startEditingEvent(event, row, col);
+                                                        }
                                                     }
                                                 }}
                                             >
@@ -718,7 +770,7 @@
                                     <input 
                                         class="event-input"
                                         bind:value={editText}
-                                        on:keydown={handleKeydown}
+                                        on:keydown|stopPropagation={handleKeydown}
                                         on:blur={handleBlur}
                                         on:click|stopPropagation
                                         placeholder="8A-9A Meeting or All day event"
@@ -769,7 +821,7 @@
                                 <input 
                                     class="agenda-event-input editing-inline"
                                     bind:value={editText}
-                                    on:keydown={handleKeydown}
+                                    on:keydown|stopPropagation={handleKeydown}
                                     on:blur={handleBlur}
                                     on:click|stopPropagation
                                     placeholder="8A-9A Meeting or All day event"
@@ -794,8 +846,14 @@
                                     on:click={() => canEdit && startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7)}
                                     on:keydown={(e) => {
                                         if (canEdit && (e.key === 'Enter' || e.key === ' ')) {
-                                            e.preventDefault();
-                                            startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7);
+                                            // Only prevent default if we're not in an input field
+                                            const target = e.target as HTMLElement;
+                                            const isInInputField = target.tagName === 'INPUT' || target.closest('.event-input, .agenda-event-input');
+                                            
+                                            if (!isInInputField && !editingCell) {
+                                                e.preventDefault();
+                                                startEditingEvent(event, Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7);
+                                            }
                                         }
                                     }}
                                     on:dragstart={(e) => handleDragStart(e, event)}
@@ -853,7 +911,7 @@
                         <input 
                             class="agenda-event-input"
                             bind:value={editText}
-                            on:keydown={handleKeydown}
+                            on:keydown|stopPropagation={handleKeydown}
                             on:blur={handleBlur}
                             on:click|stopPropagation
                             placeholder="8A-9A Meeting or All day event"

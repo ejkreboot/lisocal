@@ -207,3 +207,39 @@ export function formatTimeForDisplay(time: string): string {
     
     return `${displayHours}${minutes > 0 ? `:${minutes.toString().padStart(2, '0')}` : ''}${period}`
 }
+
+/**
+ * Quote interface for quotes.json
+ */
+export interface Quote {
+    quote: string
+    author: string
+    source: string
+}
+
+/**
+ * Get a random quote from the quotes collection
+ */
+export function getRandomQuote(quotes: Quote[]): Quote {
+    if (!quotes || quotes.length === 0) {
+        return {
+            quote: "The present moment is filled with joy and happiness. If you are attentive, you will see it.",
+            author: "Thích Nhất Hạnh",
+            source: "Default quote"
+        }
+    }
+    
+    const randomIndex = Math.floor(Math.random() * quotes.length)
+    return quotes[randomIndex]
+}
+
+/**
+ * Format a quote as markdown content for a note
+ */
+export function formatQuoteAsNote(quote: Quote): string {
+    return `# Thought for the day
+
+> ${quote.quote}
+>
+> — ${quote.author} <a href="${quote.source}" target="_blank" rel="noopener noreferrer">SOURCE</a>`
+}

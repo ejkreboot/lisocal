@@ -6,7 +6,7 @@ lisocal is a sveltekit-based web application designed to provide users with a dy
 
 ## Guiding principle
 
-Using lisocal should feel effortless and fun, like shredding the gnar on skis. We eliminate friction wherever possible, providing users with an intuitive and engaging experience. This includes authentication, schedule entry, and calendar navigation. This also includes the developer's experience.  We strive to make the codebase clean, modular, and easy to understand, so that contributors can quickly get up to speed and start making meaningful contributions. We eschew complexity, remembering that one pair of skis is great, two can better, but 10 is just showing off.
+Using lisocal should feel effortless and fun. We eliminate friction wherever possible, providing users with an intuitive and engaging experience. This includes authentication, schedule entry, and calendar navigation. This also includes the developer's experience.  We strive to make the codebase clean, modular, and easy to understand, so that contributors can quickly get up to speed and start making meaningful contributions. We eschew complexity, remembering that one pair of skis is great, two can better, but 10 is just showing off.
 
 ## Key Components
 

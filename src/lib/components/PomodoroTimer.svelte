@@ -150,22 +150,22 @@
 
 				<!-- Progress Circle -->
 				<div class="timer-circle">
-					<svg class="progress-ring" width="100" height="100">
+					<svg class="progress-ring" width="200" height="200">
 						<circle
 							class="progress-ring-bg"
-							cx="50" cy="50" r="42"
+							cx="100" cy="100" r="84"
 							fill="transparent"
 							stroke="rgba(120, 160, 120, 0.2)"
 							stroke-width="4"
 						/>
 						<circle
 							class="progress-ring-progress"
-							cx="50" cy="50" r="42"
+							cx="100" cy="100" r="84"
 							fill="transparent"
 							stroke="rgba(120, 160, 120, 0.5)"
 							stroke-width="4"
 							stroke-linecap="round"
-							style="stroke-dasharray: {2 * Math.PI * 42}; stroke-dashoffset: {2 * Math.PI * 42 * (1 - progress / 100)}"
+							style="stroke-dasharray: {2 * Math.PI * 84}; stroke-dashoffset: {2 * Math.PI * 84 * (1 - progress / 100)}"
 						/>
 					</svg>
 				</div>
@@ -262,8 +262,8 @@
 
 	.close-timer-btn {
 		position: absolute;
-		top: -40px;
-		right: -40px;
+		top: -120px;
+		right: -80px;
 		background: transparent;
 		border: none;
 		color: rgba(80, 140, 80, 0.7);
@@ -284,7 +284,8 @@
 	.timer-display {
 		text-align: center;
 		margin-bottom: 0;
-		line-height: 0.8;
+		padding-top: 80px;
+		line-height:0.5
 	}
 
 	.timer-circle {

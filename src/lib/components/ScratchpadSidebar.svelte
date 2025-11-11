@@ -1,6 +1,8 @@
 <script lang="ts">
     import { supabase } from '$lib/supabase.js'
     import { marked } from 'marked'
+    import { getRandomQuote, formatQuoteAsNote, type Quote } from '$lib/calendar-utils.js'
+    import quotes from '$lib/assets/quotes.json'
     
     let { canEdit = true, calendarId, shareToken = null }: {
         canEdit?: boolean
@@ -15,6 +17,9 @@
     let editingContent = $state(false)
     let tempContent = $state('')
     let showNoteMenu = $state(false)
+    
+    // Local state for "Thought for the day" note (not saved to database)
+    let thoughtOfDayNote: any = $state(null)
     
     // Load notes when calendarId changes
     $effect(() => {
@@ -42,7 +47,10 @@
             }
             
             const data = await response.json()
-            notes = data.notes || []
+            const loadedNotes = data.notes || []
+            
+            // Handle "Thought for the day" note logic
+            handleThoughtOfDayNote(loadedNotes)
             
             // If we have notes but currentNoteIndex is out of bounds, reset it
             if (notes.length > 0 && currentNoteIndex >= notes.length) {
@@ -51,8 +59,57 @@
         } catch (error) {
             console.error('Error loading notes:', error)
             notes = []
+            // Even if loading fails, create thought of day note
+            handleThoughtOfDayNote([])
         } finally {
             loading = false
+        }
+    }
+    
+    function handleThoughtOfDayNote(loadedNotes: any[]) {
+        // Check if there's already a "Thought for the day" note
+        const existingThoughtNote = loadedNotes.find(note => 
+            note.content && 
+            note.content.split('\n')[0].replace(/^#+\s*/, '').trim() === 'Thought for the day'
+        )
+        
+        if (existingThoughtNote) {
+            // Replace existing thought with a new random quote
+            const randomQuote = getRandomQuote(quotes as Quote[])
+            const newContent = formatQuoteAsNote(randomQuote)
+            
+            // Create a local copy with updated content (not saved to database)
+            thoughtOfDayNote = {
+                ...existingThoughtNote,
+                content: newContent,
+                isLocal: true
+            }
+            
+            // Replace in the notes array and make it the current note
+            notes = loadedNotes.map(note => 
+                note.id === existingThoughtNote.id ? thoughtOfDayNote : note
+            )
+            
+            // Set this as the current note
+            const thoughtIndex = notes.findIndex(note => note.id === existingThoughtNote.id)
+            if (thoughtIndex !== -1) {
+                currentNoteIndex = thoughtIndex
+            }
+        } else {
+            // Create a new "Thought for the day" note
+            const randomQuote = getRandomQuote(quotes as Quote[])
+            const newContent = formatQuoteAsNote(randomQuote)
+            
+            thoughtOfDayNote = {
+                id: `thought-of-day-${Date.now()}`,
+                content: newContent,
+                isLocal: true,
+                created_at: new Date().toISOString()
+            }
+            
+            // Add to beginning of notes array and make it current
+            notes = [thoughtOfDayNote, ...loadedNotes]
+            currentNoteIndex = 0
         }
     }
     
@@ -97,6 +154,20 @@
         
         const noteToDelete = notes[currentNoteIndex]
         if (!noteToDelete) return
+        
+        // Handle local notes (like "Thought for the day") differently
+        if (noteToDelete.isLocal) {
+            // Just remove from local state, no API call needed
+            notes = notes.filter(note => note.id !== noteToDelete.id)
+            
+            // Adjust currentNoteIndex if needed
+            if (currentNoteIndex >= notes.length && notes.length > 0) {
+                currentNoteIndex = notes.length - 1
+            } else if (notes.length === 0) {
+                currentNoteIndex = 0
+            }
+            return
+        }
         
         try {
             const params = new URLSearchParams({ noteId: noteToDelete.id })
@@ -161,8 +232,23 @@
             return
         }
         
+        const currentNote = notes[currentNoteIndex]
+        
+        // Handle local notes (like "Thought for the day") - just update in memory
+        if (currentNote.isLocal) {
+            notes = notes.map((note, index) => 
+                index === currentNoteIndex 
+                    ? { ...note, content: tempContent.trim() }
+                    : note
+            )
+            
+            editingContent = false
+            tempContent = ''
+            return
+        }
+        
         try {
-            const noteId = notes[currentNoteIndex].id
+            const noteId = currentNote.id
             const params = new URLSearchParams({ noteId })
             if (shareToken) params.append('shareToken', shareToken)
             
@@ -209,6 +295,24 @@
         if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
             event.preventDefault()
             saveContent()
+        }
+    }
+    
+    function handleContentClick(event: MouseEvent) {
+        // Check if the clicked element or any of its parents is a link
+        let target = event.target as HTMLElement
+        while (target && target !== event.currentTarget) {
+            if (target.tagName === 'A') {
+                // This is a link click, don't start editing
+                event.stopPropagation()
+                return
+            }
+            target = target.parentElement as HTMLElement
+        }
+        
+        // Not a link click, proceed with editing if allowed
+        if (canEdit) {
+            startEditContent()
         }
     }
     
@@ -328,10 +432,16 @@
                                 <div 
                                     class="note-menu-item"
                                     class:active={index === currentNoteIndex}
+                                    class:thought-note={note.isLocal}
                                     onclick={() => selectNote(index)}
                                 >
                                     <span class="note-menu-number">{index + 1}</span>
-                                    <span class="note-menu-title">{getNoteTitleFromContent(note.content)}</span>
+                                    <span class="note-menu-title">
+                                        {getNoteTitleFromContent(note.content)}
+                                        {#if note.isLocal}
+                                            <span class="thought-indicator" title="Daily thought (not saved)">✨</span>
+                                        {/if}
+                                    </span>
                                 </div>
                             {/each}
                         </div>
@@ -353,7 +463,10 @@
                     <textarea 
                         class="textarea edit-content-textarea"
                         bind:value={tempContent}
-                        onkeydown={handleContentKeydown}
+                        onkeydown={(e) => {
+                            e.stopPropagation();
+                            handleContentKeydown(e);
+                        }}
                         onblur={saveContent}
                         placeholder="Write your note in Markdown..."
                     ></textarea>
@@ -366,7 +479,7 @@
                     <div 
                         class="note-content"
                         class:editable={canEdit}
-                        onclick={() => canEdit && startEditContent()}
+                        onclick={handleContentClick}
                         title={canEdit ? "Click to edit content" : ""}
                     >
                         {@html renderedContent}
@@ -626,6 +739,16 @@
         font-weight: 500;
     }
     
+    .note-menu-item.thought-note {
+        background: linear-gradient(135deg, #f8fafc 0%, #e8f4fd 100%);
+    }
+    
+    .thought-indicator {
+        font-size: 10px;
+        margin-left: var(--space-1);
+        opacity: 0.7;
+    }
+    
     .note-content-container {
         flex: 1;
         overflow: hidden;
@@ -747,20 +870,67 @@
     }
     
     :global(.note-content blockquote) {
-        border-left: 3px solid var(--primary-color);
-        padding-left: var(--space-3);
-        margin: 0 0 var(--space-3);
-        color: var(--gray-600);
-        font-style: italic;
+        position: relative;
+        border: none !important;
+        border-left: none !important;
+        padding: var(--space-10) var(--space-5) var(--space-4) var(--space-5);
+        margin: var(--space-4) 0;
+        background: linear-gradient(135deg, #f8fafc 0%, #e8f4fd 100%);
+        border-radius: var(--radius-small-default);
+        color: var(--gray-700);
+        font-style: normal;
+        font-size: 17px;
+        line-height: 1.6;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        font-family: 'Poiret One', cursive;
+    }
+    
+    :global(.note-content blockquote::before) {
+        content: '"';
+        position: absolute;
+        top: var(--space-1);
+        left: var(--space-3);
+        font-size: 48px;
+        color: var(--primary-color);
+        opacity: 0.25;
+        font-family: 'Sorts Mill Goudy', serif;
+        line-height: 1;
+        font-weight: 400;
+    }
+    
+    :global(.note-content blockquote p) {
+        margin: 0;
+        position: relative;
+        z-index: 1;
+        padding-top: var(--space-3);
+        font-style: normal;
     }
     
     :global(.note-content a) {
         color: var(--primary-color);
         text-decoration: none;
+        font-size: 11px;
+        font-weight: 600;
+        opacity: 0.7;
+        transition: all var(--transition-normal);
+        display: inline;
+        margin-left: var(--space-2);
+        font-family: var(--font-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
     :global(.note-content a:hover) {
-        text-decoration: underline;
+        text-decoration: none;
+        opacity: 1;
+        color: var(--primary-hover);
+    }
+    
+    :global(.note-content a::after) {
+        content: ' ↗';
+        font-size: 9px;
+        opacity: 0.6;
+        margin-left: 2px;
     }
     
     :global(.note-content strong) {
@@ -769,5 +939,9 @@
     
     :global(.note-content em) {
         font-style: italic;
+        color: var(--gray-500);
+        font-size: 13px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
     }
 </style>

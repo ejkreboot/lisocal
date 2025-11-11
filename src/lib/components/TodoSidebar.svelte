@@ -1,5 +1,42 @@
 <script lang="ts">
     import { supabase } from '$lib/supabase.js'
+    import { scale } from 'svelte/transition'
+    import { quintOut, quintIn } from 'svelte/easing'
+    
+    // Custom fadeFlow transition to match your signature animation
+    function fadeFlowIn(node: HTMLElement, { duration = 250 } = {}) {
+        return {
+            duration,
+            easing: (t: number) => t * (2 - t), // cubic-bezier approximation
+            css: (t: number) => {
+                const scale = 0.75 + (0.25 * t)
+                const blur = 12 * (1 - t)
+                const y = 12 * (1 - t)
+                return `
+                    opacity: ${t};
+                    transform: translateY(${y}px) scale(${scale});
+                    filter: blur(${blur}px);
+                `
+            }
+        }
+    }
+    
+    function fadeFlowOut(node: HTMLElement, { duration = 300 } = {}) {
+        return {
+            duration,
+            easing: (t: number) => t * t, // ease-in
+            css: (t: number) => {
+                const scale = 0.75 + (0.25 * t)
+                const blur = 12 * (1 - t)
+                const y = 12 * (1 - t)
+                return `
+                    opacity: ${t};
+                    transform: translateY(${y}px) scale(${scale});
+                    filter: blur(${blur}px);
+                `
+            }
+        }
+    }
     
     let { canEdit = true, calendarId, shareToken = null }: {
         canEdit?: boolean
@@ -9,6 +46,7 @@
     
     let todos: any[] = $state([])
     let loading = $state(false)
+    let removingTodoIds: Set<string> = $state(new Set())
     
     let newTodoText = $state('')
     let editingId: string | null = $state(null)
@@ -105,6 +143,12 @@
         const todo = todos.find(t => t.id === id)
         if (!todo) return
         
+        // Add immediate visual feedback
+        const todoElement = document.querySelector(`[data-todo-id="${id}"]`)
+        if (todoElement) {
+            todoElement.classList.add('checking')
+        }
+        
         try {
             const params = new URLSearchParams({ todoId: id })
             if (shareToken) params.append('shareToken', shareToken)
@@ -124,18 +168,29 @@
                 throw new Error('Failed to update todo')
             }
             
-            todos = todos.map(t => 
-                t.id === id 
-                    ? { ...t, completed: !t.completed }
-                    : t
-            )
+            // Small delay to let check animation complete
+            setTimeout(() => {
+                todos = todos.map(t => 
+                    t.id === id 
+                        ? { ...t, completed: !t.completed }
+                        : t
+                )
+            }, 150)
+            
         } catch (error) {
             console.error('Error toggling todo:', error)
+            // Remove visual feedback if error
+            if (todoElement) {
+                todoElement.classList.remove('checking')
+            }
         }
     }
     
     async function deleteTodo(id: string) {
         if (!canEdit) return
+        
+        // Mark as removing to trigger exit animation
+        removingTodoIds.add(id)
         
         try {
             const params = new URLSearchParams({ todoId: id })
@@ -152,9 +207,16 @@
                 throw new Error('Failed to delete todo')
             }
             
-            todos = todos.filter(todo => todo.id !== id)
+            // Remove from state after animation completes
+            setTimeout(() => {
+                todos = todos.filter(todo => todo.id !== id)
+                removingTodoIds.delete(id)
+            }, 350) // slightly longer to ensure animation completes
+            
         } catch (error) {
             console.error('Error deleting todo:', error)
+            // Remove from removing set if error
+            removingTodoIds.delete(id)
         }
     }
     
@@ -374,7 +436,10 @@
                     <input 
                         class="input new-todo-input"
                         bind:value={newTodoText}
-                        onkeydown={handleNewTodoKeydown}
+                        onkeydown={(e) => {
+                            e.stopPropagation();
+                            handleNewTodoKeydown(e);
+                        }}
                         placeholder="Add a new task..."
                         aria-label="New task description"
                         disabled={loading}
@@ -403,11 +468,13 @@
                         <div class="todos-list">
                             {#each incompleteTodos as todo, index (todo.id)}
                                 <div 
-                                    class="todo-item" 
+                                    class="todo-item todo-item-enter" 
                                     class:completed={todo.completed}
                                     class:drag-over={dragOverIndex === index && dragOverSection === 'incomplete'}
                                     class:draggable={canEdit}
                                     class:dragging={draggedTodoId === todo.id}
+                                    class:removing={removingTodoIds.has(todo.id)}
+                                    data-todo-id={todo.id}
                                     draggable={canEdit}
                                     ondragstart={(e) => handleDragStart(e, todo)}
                                     ondragover={(e) => handleDragOver(e, index)}
@@ -415,6 +482,8 @@
                                     ondrop={(e) => handleDrop(e, todo, index)}
                                     ondragend={handleDragEnd}
                                     role="listitem"
+                                    in:fadeFlowIn={{ duration: 250 }}
+                                    out:fadeFlowOut={{ duration: 300 }}
                                 >
                                     {#if canEdit}
                                         <div class="drag-handle" title="Drag to reorder">
@@ -440,7 +509,10 @@
                                             <input 
                                                 class="input edit-todo-input"
                                                 bind:value={editText}
-                                                onkeydown={handleEditKeydown}
+                                                onkeydown={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditKeydown(e);
+                                                }}
                                                 onblur={saveEdit}
                                             />
                                         {:else}
@@ -480,7 +552,14 @@
                         <h3 class="section-title completed-section">Completed ({completedTodos.length})</h3>
                         <div class="todos-list">
                             {#each completedTodos as todo (todo.id)}
-                                <div class="todo-item completed" role="listitem">
+                                <div 
+                                    class="todo-item completed todo-item-enter" 
+                                    role="listitem"
+                                    data-todo-id={todo.id}
+                                    class:removing={removingTodoIds.has(todo.id)}
+                                    in:fadeFlowIn={{ duration: 250 }}
+                                    out:fadeFlowOut={{ duration: 300 }}
+                                >
                                     <div class="todo-content">
                                         {#if canEdit}
                                             <button 
@@ -500,7 +579,10 @@
                                             <input 
                                                 class="input edit-todo-input"
                                                 bind:value={editText}
-                                                onkeydown={handleEditKeydown}
+                                                onkeydown={(e) => {
+                                                    e.stopPropagation();
+                                                    handleEditKeydown(e);
+                                                }}
                                                 onblur={saveEdit}
                                             />
                                         {:else}
@@ -684,6 +766,53 @@
         border-color: #e8e9ea;
     }
     
+    /* Animation states */
+    .todo-item-enter {
+        animation: fadeFlowIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .todo-item.checking {
+        animation: checkBounce 0.3s ease-out;
+    }
+    
+    .todo-item.removing {
+        animation: fadeFlowOut 0.3s cubic-bezier(0.6, 0, 0.8, 1) forwards;
+        pointer-events: none;
+    }
+    
+    @keyframes fadeFlowIn {
+        0% {
+            opacity: 0;
+            transform: translateY(12px) scale(0.75);
+            filter: blur(12px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            filter: blur(0);
+        }
+    }
+
+    @keyframes fadeFlowOut {
+        100% {
+            opacity: 1;
+            transform: translateY(0px) scale(1);
+            filter: blur(0px);
+        }
+        0% {
+            opacity: 0;
+            transform: translateY(12px) scale(0.75);
+            filter: blur(12px);
+        }
+    }
+    
+    @keyframes checkBounce {
+        0% { transform: scale(1); }
+        30% { transform: scale(1.05); }
+        60% { transform: scale(0.98); }
+        100% { transform: scale(1); }
+    }
+    
     .todo-item.draggable {
         cursor: grab;
     }
@@ -742,6 +871,7 @@
     
     .todo-checkbox:hover {
         border-color: var(--primary-color);
+        transform: scale(1.05);
     }
     
     .todo-checkbox.readonly {
@@ -752,6 +882,13 @@
     .todo-item.completed .todo-checkbox {
         background: #4caf50;
         border-color: #4caf50;
+        animation: checkPop 0.2s ease-out;
+    }
+    
+    @keyframes checkPop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
     }
     
     .checkbox-icon {
@@ -814,6 +951,11 @@
     .delete-button:hover {
         background: #ffebee;
         color: #f44336;
+        transform: scale(1.1);
+    }
+    
+    .delete-button:active {
+        transform: scale(0.95);
     }
     
     .empty-state {

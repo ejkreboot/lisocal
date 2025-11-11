@@ -5,13 +5,29 @@
     import ScratchpadSidebar from '$lib/components/ScratchpadSidebar.svelte'
     import { user, session, loading, signOut } from '$lib/auth.js'
     import Header from '$lib/components/Header.svelte'
+    import { onMount } from 'svelte'
 
     export let data: any
     
+    // Initialize auth state immediately from server data to prevent flash
+    if (data.hasServerAuth) {
+        // We have definitive auth state from server, set it immediately
+        if (data.user) {
+            user.set(data.user)
+        }
+        loading.set(false)
+    }
+    // If no server auth, keep loading true until client-side auth completes
+    
     let userCalendar: any = null
     
-    // Load user's calendar when they sign in
-    $: if ($user && $session) {
+    // Initialize user calendar from server data if available
+    if (data.user?.calendar) {
+        userCalendar = data.user.calendar
+    }
+    
+    // Load user's calendar when they sign in (for client-side auth changes)
+    $: if ($user && $session && !userCalendar) {
         loadUserCalendar()
     }
     
@@ -108,7 +124,7 @@
         <main class="calendar-main">
             {#if $loading}
                 <div class="loading-container">
-                    <div class="loading-spinner">Loading your calendar...</div>
+                    <div class="loading-spinner">Loading...</div>
                 </div>
             {:else if calendarId}
                 <div class="calendar-navigation">
@@ -128,9 +144,6 @@
                 />
             {:else}
                 {#if $user}
-                    <div class="no-calendar">
-                        <h2>Loading your calendar...</h2>
-                    </div>
                 {:else}
                     <!-- Landing page for non-authenticated users -->
                     <div class="landing-page">

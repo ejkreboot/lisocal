@@ -25,6 +25,8 @@ export const load: ServerLoad = async ({ locals }) => {
             ...user,
             calendar: userCalendar
         } : null,
-        sharedCalendar
+        sharedCalendar,
+        // Include loading state info to help client decide initial state
+        hasServerAuth: !!user || !!sharedCalendar
     }
 }
