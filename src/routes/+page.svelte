@@ -155,6 +155,10 @@
                                     Password free, no registration needed. Enter your email,
                                     get a code, and start scheduling in seconds. 
                                 </p>
+                                <blockquote class="hero-quote">
+                                    "Simplicity is the ultimate sophistication"
+                                    <cite>— Leonardo da Vinci</cite>
+                                </blockquote>
                                 <a href="/auth" class="cta-button">Get Started</a>
                             </div>
                         </div>
@@ -387,10 +391,28 @@
         font-size: 18px;
         color: var(--gray-600);
         line-height: 1.6;
-        margin: 0 0 var(--space-8) 0;
+        margin: 0 0 var(--space-6) 0;
         max-width: 500px;
         margin-left: auto;
         margin-right: auto;
+    }
+    
+    .hero-quote {
+        font-style: italic;
+        font-size: 16px;
+        color: var(--gray-500);
+        margin: 0 0 var(--space-8) 0;
+        padding: 0;
+        border: none;
+        text-align: center;
+    }
+    
+    .hero-quote cite {
+        display: block;
+        font-size: 14px;
+        margin-top: var(--space-2);
+        font-style: normal;
+        color: var(--gray-400);
     }
     
     .cta-button {
@@ -497,7 +519,16 @@
                 
         .hero-description {
             font-size: 16px;
+            margin-bottom: var(--space-4);
+        }
+        
+        .hero-quote {
+            font-size: 14px;
             margin-bottom: var(--space-6);
+        }
+        
+        .hero-quote cite {
+            font-size: 12px;
         }
         
         .features-section {
