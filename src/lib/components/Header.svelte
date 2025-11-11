@@ -425,7 +425,7 @@
     }
     
     .icon-button {
-        background: var(--gray-50);
+        background: transparent;
         color: var(--gray-600);
         border: 1px solid transparent;
         padding: 10px;
@@ -439,85 +439,89 @@
         width: 36px;
         height: 36px;
         box-sizing: border-box;
+        opacity: 0.5;
     }
     
     .icon-button:hover {
-        background: #e9ecef;
+        background: transparent;
         border-color: #dee2e6;
         transform: translateY(-1px);
         box-shadow: var(--shadow-sm);
+        opacity: 1;
     }
     
     .icon-button:disabled {
-        background: var(--gray-50);
+        background: transparent;
         color: #adb5bd;
         cursor: not-allowed;
         transform: none;
         box-shadow: none;
+        opacity: 0.3;
     }
     
     .icon-button:disabled:hover {
-        background: var(--gray-50);
+        background: transparent;
         border-color: transparent;
+        opacity: 0.3;
     }
     
     .todo-button {
-        background: #f8f5ff;
+        background: transparent;
         color: #7c3aed;
     }
     
     .todo-button:hover {
-        background: #f3f0ff;
+        background: transparent;
         color: #6d28d9;
     }
     
     .notes-button {
-        background: #f0f9ff;
+        background: transparent;
         color: #0284c7;
     }
     
     .notes-button:hover {
-        background: #e0f2fe;
+        background: transparent;
         color: #0369a1;
     }
     
     .pomodoro-button {
-        background: #fdf9e9;
+        background: transparent;
         color: #d97706;
     }
     
     .pomodoro-button:hover {
-        background: #fde68a;
+        background: transparent;
         color: #b45309;
     }
     
     .external-cal-button {
-        background: #f0fdf4;
+        background: transparent;
         color: #16a34a;
     }
     
     .external-cal-button:hover {
-        background: #dcfce7;
+        background: transparent;
         color: #15803d;
     }
     
     .share-button {
-        background: #fff7ed;
+        background: transparent;
         color: #ea580c;
     }
     
     .share-button:hover:not(:disabled) {
-        background: #fed7aa;
+        background: transparent;
         color: #c2410c;
     }
     
     .logout-button {
-        background: #fef2f2;
+        background: transparent;
         color: #dc2626;
     }
     
     .logout-button:hover {
-        background: #fecaca;
+        background: transparent;
         color: #b91c1c;
     }
     
@@ -533,12 +537,12 @@
     }
     
     .hamburger-button {
-        background: var(--gray-50);
+        background: transparent;
         color: var(--gray-600);
     }
     
     .hamburger-button:hover {
-        background: var(--gray-100);
+        background: transparent;
         color: var(--gray-700);
     }
     
