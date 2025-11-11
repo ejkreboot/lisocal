@@ -745,15 +745,7 @@
         animation: fadeFlowOut 0.3s cubic-bezier(0.6, 0, 0.8, 1) forwards;
         pointer-events: none;
     }
-    
-    .todo-item.checking {
-        animation: checkBounce 0.3s ease-out;
-    }
-    
-    .todo-item.deleting {
-        animation: fadeFlowOut 0.3s cubic-bezier(0.6, 0, 0.8, 1) forwards;
-    }
-    
+        
     @keyframes fadeFlowIn {
         0% {
             opacity: 0;

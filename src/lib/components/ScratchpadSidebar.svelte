@@ -873,7 +873,7 @@
         position: relative;
         border: none !important;
         border-left: none !important;
-        padding: var(--space-10) var(--space-5) var(--space-4) var(--space-5);
+        padding: var(--space-6) var(--space-5) var(--space-4) var(--space-5);
         margin: var(--space-4) 0;
         background: linear-gradient(135deg, #f8fafc 0%, #e8f4fd 100%);
         border-radius: var(--radius-small-default);
