@@ -5,6 +5,7 @@
     import TodoModal from '$lib/components/TodoModal.svelte'
     import NotesModal from '$lib/components/NotesModal.svelte'
     import PomodoroTimer from '$lib/components/PomodoroTimer.svelte'
+    import HabitTrackerModal from '$lib/components/HabitTrackerModal.svelte'
 
     let { data, calendarName, calendarId } = $props();
 
@@ -16,6 +17,7 @@
     let showShareDialog = $state(false)
     let showExternalCalendarModal = $state(false)
     let showPomodoroTimer = $state(false)
+    let showHabitTracker = $state(false)
 
     function startEditingTitle() {
         if (!$user || !calendarName) return
@@ -187,6 +189,13 @@
                         >
                             <span class="material-symbols-outlined" style="font-size: 16px;">timer</span>
                         </button>
+                        <button 
+                            onclick={() => showHabitTracker = true} 
+                            class="habit-button icon-button"
+                            title="Habit Tracker"
+                        >
+                            <span class="material-symbols-outlined" style="font-size: 16px;">self_improvement</span>
+                        </button>
                         {#if canEdit}
                             <button 
                                 onclick={() => showExternalCalendarModal = true} 
@@ -255,6 +264,13 @@
                                 <span class="material-symbols-outlined">timer</span>
                                 Pomodoro Timer
                             </button>
+                            <button 
+                                onclick={() => { showHabitTracker = true; closeMobileMenu(); }} 
+                                class="mobile-menu-item"
+                            >
+                                <span class="material-symbols-outlined">self_improvement</span>
+                                Habit Tracker
+                            </button>
                             {#if canEdit}
                                 <button 
                                     onclick={() => { showExternalCalendarModal = true; closeMobileMenu(); }} 
@@ -318,6 +334,14 @@
 
 <PomodoroTimer 
     bind:isOpen={showPomodoroTimer}
+/>
+
+<HabitTrackerModal 
+    bind:isOpen={showHabitTracker}
+    {canEdit}
+    calendarId={calendarId || ''}
+    shareToken={data?.sharedCalendar?.shareToken || null}
+    on:close={() => showHabitTracker = false}
 />
 
     <style>
@@ -493,6 +517,16 @@
     .pomodoro-button:hover {
         background: transparent;
         color: #b45309;
+    }
+    
+    .habit-button {
+        background: transparent;
+        color: #ec4899;
+    }
+    
+    .habit-button:hover {
+        background: transparent;
+        color: #db2777;
     }
     
     .external-cal-button {
