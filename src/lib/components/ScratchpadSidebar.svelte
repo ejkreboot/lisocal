@@ -507,7 +507,7 @@
     
     .sidebar-header {
         padding: var(--space-5) var(--space-5) var(--space-4);
-        border-bottom: 1px solid var(--gray-200);
+        border-bottom: 0px solid var(--gray-200);
         flex-shrink: 0;
         display: flex;
         align-items: center;
@@ -627,13 +627,13 @@
     }
     
     .note-counter {
-        padding: var(--space-2) var(--space-5);
+        padding: var(--space-1) var(--space-5);
         display: flex;
         align-items: center;
         justify-content: center;
         gap: var(--space-3);
-        background: var(--gray-50);
-        border-bottom: 1px solid var(--gray-100);
+        background: var(--white);
+        border-bottom: 0px solid var(--gray-100);
         flex-shrink: 0;
     }
     

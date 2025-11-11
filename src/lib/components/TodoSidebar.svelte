@@ -653,7 +653,7 @@
     
     .sidebar-header {
         padding: var(--space-5) var(--space-5) var(--space-4);
-        border-bottom: 1px solid var(--gray-200);
+        border-bottom: 0px solid var(--gray-200);
         flex-shrink: 0;
         min-height: 70px;
         max-height: 70px;
@@ -770,11 +770,7 @@
     .todo-item-enter {
         animation: fadeFlowIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
-    .todo-item.checking {
-        animation: checkBounce 0.3s ease-out;
-    }
-    
+        
     .todo-item.removing {
         animation: fadeFlowOut 0.3s cubic-bezier(0.6, 0, 0.8, 1) forwards;
         pointer-events: none;
