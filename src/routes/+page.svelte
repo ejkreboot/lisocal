@@ -62,6 +62,108 @@
     let currentYear = currentDate.getFullYear()
     let currentMonth = currentDate.getMonth()
     
+    // Sidebar resizing state
+    let todoHeight = 50 // Default to 50% for todo section
+    let scratchpadHeight = 50 // Default to 50% for scratchpad section
+    let sidebarContent: HTMLElement
+    let isResizing = false
+    let resizeHandle: HTMLElement
+    
+    // Load saved sidebar split ratio from localStorage on mount
+    onMount(() => {
+        const savedSplit = localStorage.getItem('lisocal-sidebar-split')
+        if (savedSplit) {
+            const split = parseFloat(savedSplit)
+            if (split >= 20 && split <= 80) {
+                todoHeight = split
+                scratchpadHeight = 100 - split
+            }
+        }
+    })
+    
+    function startResize(e: MouseEvent) {
+        isResizing = true
+        document.addEventListener('mousemove', handleResize)
+        document.addEventListener('mouseup', stopResize)
+        document.body.style.cursor = 'row-resize'
+        document.body.style.userSelect = 'none'
+        
+        // Store reference to the handle for adding resizing class
+        resizeHandle = e.currentTarget as HTMLElement
+        
+        e.preventDefault()
+    }
+    
+    function handleResize(e: MouseEvent) {
+        if (!isResizing || !sidebarContent) return
+        
+        const rect = sidebarContent.getBoundingClientRect()
+        const containerHeight = rect.height
+        const mouseY = e.clientY - rect.top
+        
+        // Calculate percentage based on mouse position
+        const newTodoHeight = Math.max(20, Math.min(80, (mouseY / containerHeight) * 100))
+        const newScratchpadHeight = 100 - newTodoHeight
+        
+        todoHeight = newTodoHeight
+        scratchpadHeight = newScratchpadHeight
+        
+        // Save to localStorage
+        localStorage.setItem('lisocal-sidebar-split', newTodoHeight.toString())
+    }
+    
+    function stopResize() {
+        isResizing = false
+        resizeHandle = null
+        document.removeEventListener('mousemove', handleResize)
+        document.removeEventListener('mouseup', stopResize)
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
+    }
+    
+    function handleResizeKeydown(e: KeyboardEvent) {
+        let adjustment = 0
+        
+        switch (e.key) {
+            case 'ArrowUp':
+                adjustment = -5 // Make todo section smaller
+                break
+            case 'ArrowDown':
+                adjustment = 5 // Make todo section larger
+                break
+            case 'Home':
+                todoHeight = 20
+                scratchpadHeight = 80
+                localStorage.setItem('lisocal-sidebar-split', todoHeight.toString())
+                e.preventDefault()
+                return
+            case 'End':
+                todoHeight = 80
+                scratchpadHeight = 20
+                localStorage.setItem('lisocal-sidebar-split', todoHeight.toString())
+                e.preventDefault()
+                return
+            case ' ':
+            case 'Enter':
+                // Reset to 50/50 split
+                todoHeight = 50
+                scratchpadHeight = 50
+                localStorage.setItem('lisocal-sidebar-split', todoHeight.toString())
+                e.preventDefault()
+                return
+            default:
+                return
+        }
+        
+        if (adjustment !== 0) {
+            const newTodoHeight = Math.max(20, Math.min(80, todoHeight + adjustment))
+            todoHeight = newTodoHeight
+            scratchpadHeight = 100 - newTodoHeight
+            localStorage.setItem('lisocal-sidebar-split', todoHeight.toString())
+            e.preventDefault()
+        }
+    }
+    
     function previousMonth() {
         if (currentMonth === 0) {
             currentMonth = 11
@@ -105,17 +207,30 @@
 <div class="page-wrapper">
     {#if calendarId}
         <div class="sidebar-container">
-            <div class="sidebar-content">
-                <TodoSidebar 
-                    {canEdit}
-                    {calendarId}
-                    shareToken={data.sharedCalendar?.shareToken || null}
-                />
-                <ScratchpadSidebar 
-                    {canEdit}
-                    {calendarId}
-                    shareToken={data.sharedCalendar?.shareToken || null}
-                />
+            <div class="sidebar-content" bind:this={sidebarContent}>
+                <div class="todo-container" style="height: {todoHeight}%;">
+                    <TodoSidebar 
+                        {canEdit}
+                        {calendarId}
+                        shareToken={data.sharedCalendar?.shareToken || null}
+                    />
+                </div>
+                <button class="resize-handle" 
+                        class:resizing={isResizing}
+                        bind:this={resizeHandle}
+                        on:mousedown={startResize} 
+                        on:keydown={handleResizeKeydown}
+                        aria-label="Resize sidebar sections"
+                        title="Drag to resize To-Do and Scratchpad sections, or use arrow keys">
+                    <div class="resize-handle-line"></div>
+                </button>
+                <div class="scratchpad-container" style="height: {scratchpadHeight}%;">
+                    <ScratchpadSidebar 
+                        {canEdit}
+                        {calendarId}
+                        shareToken={data.sharedCalendar?.shareToken || null}
+                    />
+                </div>
             </div>
         </div>
     {/if}
@@ -142,10 +257,8 @@
                     {canEdit}
                     shareToken={data.sharedCalendar?.shareToken || null}
                 />
-            {:else}
-                {#if $user}
-                {:else}
-                    <!-- Landing page for non-authenticated users -->
+            {:else if !$user}
+                <!-- Landing page for non-authenticated users -->
                     <div class="landing-page">
                         <div class="hero-section">
                             <div class="hero-content">
@@ -196,7 +309,6 @@
                             </div>
                         </div>
                     </div>
-                {/if}
             {/if}
         </main>
     </div>
@@ -233,6 +345,75 @@
         display: flex;
         flex-direction: column;
         overflow: hidden;
+        position: relative;
+    }
+    
+    .todo-container {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .scratchpad-container {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    
+    .resize-handle {
+        height: 8px;
+        width: 100%;
+        background: var(--gray-100);
+        border: none;
+        border-top: 1px solid var(--gray-200);
+        border-bottom: 1px solid var(--gray-200);
+        cursor: row-resize;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color var(--transition-normal);
+        flex-shrink: 0;
+        position: relative;
+        z-index: 10;
+        padding: 0;
+    }
+    
+    .resize-handle:hover {
+        background: var(--gray-200);
+    }
+    
+    .resize-handle:active,
+    .resize-handle.resizing {
+        background: var(--primary-light);
+    }
+    
+    .resize-handle-line {
+        width: 40px;
+        height: 2px;
+        background: var(--gray-400);
+        border-radius: 1px;
+        transition: all var(--transition-normal);
+    }
+    
+    .resize-handle:hover .resize-handle-line {
+        background: var(--gray-600);
+        width: 60px;
+    }
+    
+    .resize-handle:active .resize-handle-line,
+    .resize-handle.resizing .resize-handle-line {
+        background: var(--primary-color);
+        width: 60px;
+    }
+    
+    .resize-handle:focus {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+    }
+    
+    .resize-handle:focus .resize-handle-line {
+        background: var(--primary-color);
+        width: 50px;
     }
     
     .calendar-container {
@@ -339,24 +520,7 @@
         box-sizing: border-box;
     }
     
-    .no-calendar {
-        text-align: center;
-        padding: 60px var(--space-5);
-        background: var(--white);
-        border-radius: var(--radius-small-default);
-        box-shadow: var(--shadow-sm);
-    }
-    
-    .no-calendar h2 {
-        color: var(--gray-700);
-        margin-bottom: var(--space-4);
-    }
 
-    :global(.no-calendar p) { 
-        color: var(--gray-600);
-        margin-bottom: var(--space-6);
-        font-size: 16px;
-    }
     
     /* Landing page styles */
     .landing-page {

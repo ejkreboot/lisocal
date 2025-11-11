@@ -645,7 +645,7 @@
         border-right: 1px solid var(--gray-200);
         display: flex;
         flex-direction: column;
-        height: 50%;
+        height: 100%;
         width: 100%;
         min-width: 240px;
         max-width: 400px;
