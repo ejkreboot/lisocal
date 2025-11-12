@@ -630,7 +630,7 @@
     
     .btn-secondary {
         background: var(--gray-100);
-        color: var(--gray-700);
+        color: var(--dark-text);
     }
     
     .btn-secondary:hover:not(:disabled) {
@@ -669,7 +669,7 @@
     
     .close-button:hover {
         background: var(--gray-100);
-        color: var(--gray-700);
+        color: var(--dark-text);
     }
     
     .modal-body {
@@ -785,7 +785,7 @@
         gap: var(--space-2);
         font-size: 15px;
         font-weight: 600;
-        color: var(--gray-700);
+        color: var(--dark-text);
         flex: 1;
         min-width: 0;
     }

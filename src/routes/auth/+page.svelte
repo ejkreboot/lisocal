@@ -283,7 +283,7 @@
         display: block;
         margin-bottom: var(--space-2);
         font-weight: 600;
-        color: var(--gray-700);
+        color: var(--dark-text);
         font-size: 14px;
     }
     

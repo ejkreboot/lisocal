@@ -88,7 +88,7 @@
 		}
 	}
 
-	onMount(() => {
+	onMount(async () => {
 		if (typeof window !== 'undefined') {
 			document.addEventListener('keydown', handleKeydown)
 		}
@@ -109,6 +109,7 @@
 			pauseTimer()
 		}
 	})
+
 </script>
 
 {#if isOpen}
@@ -215,13 +216,13 @@
 		right: 0;
 		bottom: 0;
 		background: linear-gradient(135deg, 
-			rgba(200, 240, 200, 0.9) 0%,     /* Very light sage green */
-			rgba(220, 245, 220, 0.9) 25%,    /* Pale mint */
-			rgba(210, 242, 210, 0.9) 50%,    /* Soft eucalyptus */
-			rgba(190, 235, 190, 0.9) 75%,    /* Light sage */
-			rgba(205, 238, 205, 0.9) 100%    /* Gentle mint */
+			rgba(218, 235, 250, 0.80) 0%,    /* Very light gray, almost white */
+			rgba(240, 240, 242, 0.94) 25%,   /* Soft light gray */
+			rgba(240, 247, 251, 0.94) 50%,   /* Gentle darker wave */
+			rgba(242, 242, 244, 0.94) 75%,   /* Back to lighter */
+			rgba(233, 251, 253, 0.80) 100%   /* Subtle wave */
 		);
-		background-size: 400% 400%;
+		background-size: 200% 200%;
 		animation: gentle-morph 20s ease-in-out infinite;
 		display: flex;
 		align-items: center;
@@ -254,7 +255,7 @@
 		flex-direction: column;
 		align-items: center;
 		gap: var(--space-8);
-		color: white;
+		color: rgba(100, 100, 110, 0.9);
 		text-align: center;
 		max-width: 90vw;
 		max-height: 90vh;
@@ -266,7 +267,7 @@
 		right: -80px;
 		background: transparent;
 		border: none;
-		color: rgba(80, 140, 80, 0.7);
+		color: rgba(120, 120, 130, 0.6);
 		width: 40px;
 		height: 40px;
 		cursor: pointer;
@@ -277,7 +278,7 @@
 	}
 
 	.close-timer-btn:hover {
-		color: rgba(60, 120, 60, 0.9);
+		color: rgba(100, 100, 110, 0.9);
 		transform: scale(1.1);
 	}
 
@@ -298,7 +299,7 @@
 
 	.progress-ring {
 		transform: rotate(-90deg);
-		filter: drop-shadow(0 0 5px rgba(120, 160, 120, 0.1));
+		filter: drop-shadow(0 0 5px rgba(120, 120, 130, 0.1));
 	}
 
 	.progress-ring-progress {
@@ -312,8 +313,8 @@
 		font-size: 240px;
 		font-weight: 400;
 		font-family: 'Borel', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-		color: rgba(190, 225, 190, 0.25);
-		text-shadow: 0 1px 4px rgba(190, 225, 190, 0.08);
+		color: rgb(188, 188, 194, 0.2);
+		text-shadow: 0 1px 4px rgba(140, 140, 150, 0.08);
 	}
 
 	.digit {
@@ -353,7 +354,7 @@
 	.control-btn {
 		background: transparent;
 		border: none;
-		color: rgba(80, 140, 80, 0.7);
+		color: rgba(120, 120, 130, 0.6);
 		width: 50px;
 		height: 50px;
 		cursor: pointer;
@@ -364,7 +365,7 @@
 	}
 
 	.control-btn:hover:not(:disabled) {
-		color: rgba(60, 120, 60, 0.9);
+		color: rgba(100, 100, 110, 0.9);
 		transform: scale(1.1);
 	}
 

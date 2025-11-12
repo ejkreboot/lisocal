@@ -451,9 +451,9 @@
             let style = ''
             if (eventObj?.isExternal && eventObj?.externalCalendarUrl) {
                 const colors = getExternalCalendarColor(eventObj.externalCalendarUrl)
-                style = `border-color: ${colors.bg}; color: var(--gray-700);`
+                style = `border-color: ${colors.bg}; color: var(--dark-text);`
             } else {
-                style = `border-color: var(--primary-color); color: var(--gray-700);`
+                style = `border-color: var(--primary-color); color: var(--dark-text);`
             }
             
             // Find the closest event element (either .event or .agenda-event)
@@ -949,7 +949,7 @@
     
     .calendar-header {
         background: var(--white);
-        border-bottom: 1px solid var(--gray-50);
+        border-bottom: 0.5px solid var(--gray-600);
         width: 100%;
     }
     
@@ -964,7 +964,7 @@
         text-align: center;
         font-weight: 600;
         font-size: 14px;
-        color: var(--gray-400);
+        color: var(--gray-1000);
         background: var(--white);
         width: 100%;
         display: flex;
@@ -981,13 +981,14 @@
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         width: 100%;
+        border-left: 0.5px solid var(--gray-300);
     }
     
     .calendar-day {
         min-height: 110px;
         min-width: 10px;
-        border-right: .5px solid var(--gray-100);
-        border-bottom: .5px solid var(--gray-200);
+        border-right: .5px solid var(--gray-300);
+        border-bottom: .5px solid var(--gray-500);
         padding: var(--space-2);
         position: relative;
         cursor: pointer;
@@ -1006,7 +1007,7 @@
     }
     
     .calendar-day.other-month {
-        color: var(--gray-200);
+        background: #fafafa;
     }
     
     .calendar-day.today {
@@ -1016,15 +1017,16 @@
     .calendar-day.editing {
         background: var(--primary-ultra-light);
     }
-    
-    .calendar-day:nth-child(7n) {
-        border-right: none;
-    }
-    
+
     .day-number {
         font-weight: 600;
         margin-bottom: var(--space-1);
         font-size: 14px;
+    }
+
+    .calendar-day.other-month .day-number {
+        color: #5a6577;
+        font-weight: 200;
     }
     
     .events {
@@ -1050,7 +1052,7 @@
     }
     
     .event-input::placeholder {
-        color: var(--gray-500);
+        color: var(--gray-1000);
         font-size: 11px;
     }
 
@@ -1072,7 +1074,7 @@
         background: var(--white);
         border-radius: var(--radius-small-default);
         overflow: hidden;
-        border: 1px solid var(--gray-200);
+        border: 1px solid var(--gray-1000);
     }
     
     .agenda-day {
@@ -1104,8 +1106,8 @@
         align-items: center;
         justify-content: center;
         padding: var(--space-3) var(--space-2);
-        background: var(--gray-50);
-        border-right: 1px solid var(--gray-200);
+        background: var(--gray-1000);
+        border-right: 1px solid var(--gray-1000);
     }
     
     .agenda-day.today .agenda-date {
@@ -1239,8 +1241,8 @@
     
     .agenda-add-event {
         background: none;
-        border: 2px dashed var(--gray-300);
-        color: var(--gray-600);
+        border: 2px dashed var(--gray-1000);
+        color: var(--gray-1000);
         border-radius: var(--radius-small-default);
         padding: var(--space-2) var(--space-3);
         cursor: pointer;
@@ -1256,7 +1258,7 @@
     }
     
     .no-events {
-        color: var(--gray-500);
+        color: var(--gray-1000);
         font-size: 14px;
         font-style: italic;
     }
@@ -1285,7 +1287,7 @@
     }
 
     .agenda-event-input::placeholder {
-        color: var(--gray-500);
+        color: var(--gray-1000);
         font-size: 13px;
     }
     
@@ -1341,7 +1343,7 @@
         position: fixed;
         background: white;
         border: none;
-        color: var(--gray-700);
+        color: var(--dark-text);
         padding: var(--space-2) var(--space-3);
         border-radius: var(--radius-small-default);
         font-family: var(--font-secondary);

@@ -241,5 +241,5 @@ export function formatQuoteAsNote(quote: Quote): string {
 
 > ${quote.quote}
 >
-> — ${quote.author} <a href="${quote.source}" target="_blank" rel="noopener noreferrer">SOURCE</a>`
+> — ${quote.author} <a href="${quote.source}" target="_blank" rel="noopener noreferrer">source</a>`
 }

@@ -662,7 +662,7 @@
     
     .sidebar-header h2 {
         margin: 0;
-        color: var(--gray-700);
+        color: var(--dark-text);
         font-size: 18px;
         font-weight: 600;
         font-family: var(--font-primary);
@@ -735,7 +735,7 @@
     }
     
     .section-title.completed-section {
-        color: var(--gray-500);
+        color: var(--gray-700);
     }
     
     .todos-list {
@@ -764,6 +764,7 @@
     .todo-item.completed {
         background: var(--gray-50);
         border-color: #e8e9ea;
+        color: var(--gray-700);
     }
     
     /* Animation states */
@@ -853,7 +854,7 @@
     .todo-checkbox {
         width: 18px;
         height: 18px;
-        border: 2px solid var(--gray-300);
+        border: 2px solid var(--gray-600);
         border-radius: var(--radius-small-default);
         background: var(--white);
         display: flex;
@@ -897,7 +898,7 @@
     .todo-text {
         flex: 1;
         font-size: 13px;
-        color: var(--gray-700);
+        color: var(--dark-text);
         line-height: 1.4;
         min-width: 0;
         overflow: hidden;
@@ -919,7 +920,7 @@
     
     .todo-text.completed {
         text-decoration: line-through;
-        color: var(--gray-500);
+        color: var(--gray-700);
     }
     
     .edit-todo-input {

@@ -517,7 +517,7 @@
     
     .sidebar-header h2 {
         margin: 0;
-        color: var(--gray-700);
+        color: var(--dark-text);
         font-size: 18px;
         font-weight: 600;
         font-family: var(--font-primary);
@@ -549,7 +549,7 @@
     
     .btn-secondary {
         background: var(--gray-100);
-        color: var(--gray-700);
+        color: var(--dark-text);
     }
     
     .btn-secondary:hover:not(:disabled) {
@@ -601,7 +601,6 @@
     }
     
     .nav-button {
-        background: var(--gray-50);
         border: 1px solid transparent;
         border-radius: var(--radius-small-default);
         width: 28px;
@@ -610,18 +609,18 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        color: var(--gray-600);
+        color: var(--gray-800);
         transition: all var(--transition-normal);
     }
     
     .nav-button:hover:not(:disabled) {
-        background: var(--gray-100);
-        border-color: var(--gray-200);
+        border-color: var(--gray-800);
     }
     
     .nav-button:disabled {
-        opacity: 0.3;
+        opacity: 1;
         cursor: not-allowed;
+        color: black;
     }
     
     .note-counter {
@@ -644,7 +643,7 @@
     
     .counter-text {
         font-size: 11px;
-        color: var(--gray-500);
+        color: var(--gray-800);
         font-weight: 500;
         min-width: 50px;
         text-align: center;
@@ -725,7 +724,7 @@
     
     .note-menu-title {
         font-size: 12px;
-        color: var(--gray-700);
+        color: var(--dark-text);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -820,14 +819,14 @@
         font-size: 15px;
         font-weight: 600;
         margin: var(--space-4) 0 var(--space-2);
-        color: var(--gray-700);
+        color: var(--dark-text);
     }
     
     :global(.note-content h3) {
         font-size: 14px;
         font-weight: 600;
         margin: var(--space-3) 0 var(--space-2);
-        color: var(--gray-700);
+        color: var(--dark-text);
     }
     
     :global(.note-content p) {
@@ -873,13 +872,11 @@
         border-left: none !important;
         padding: var(--space-6) var(--space-5) var(--space-4) var(--space-5);
         margin: var(--space-4) 0;
-        background: linear-gradient(135deg, #f8fafc 0%, #e8f4fd 100%);
         border-radius: var(--radius-small-default);
-        color: var(--gray-700);
+        color: var(--dark-text);
         font-style: normal;
         font-size: 17px;
         line-height: 1.6;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
         font-family: 'Poiret One', cursive;
     }
     
@@ -905,7 +902,7 @@
     }
     
     :global(.note-content a) {
-        color: var(--primary-color);
+        color: black;
         text-decoration: none;
         font-size: 11px;
         font-weight: 600;

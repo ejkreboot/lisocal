@@ -465,7 +465,7 @@
     
     .btn-secondary {
         background: var(--gray-100);
-        color: var(--gray-700);
+        color: var(--dark-text);
     }
     
     .btn-secondary:hover:not(:disabled) {
@@ -530,7 +530,7 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        color: var(--gray-600);
+        color: var(--gray-800);
         transition: all var(--transition-normal);
     }
     
@@ -553,7 +553,7 @@
     
     .counter-text {
         font-size: 12px;
-        color: var(--gray-500);
+        color: var(--gray-800);
         font-weight: 500;
         min-width: 60px;
         text-align: center;
@@ -634,7 +634,7 @@
     
     .note-menu-title {
         font-size: 13px;
-        color: var(--gray-700);
+        color: var(--dark-text);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -722,7 +722,7 @@
         font-size: 18px;
         font-weight: 600;
         margin: var(--space-5) 0 var(--space-3);
-        color: var(--gray-700);
+        color: var(--dark-text);
         line-height: 1.3;
     }
     
@@ -730,7 +730,7 @@
         font-size: 16px;
         font-weight: 600;
         margin: var(--space-4) 0 var(--space-2);
-        color: var(--gray-700);
+        color: var(--dark-text);
         line-height: 1.3;
     }
     
@@ -782,14 +782,13 @@
         margin: 0 0 var(--space-4);
         color: var(--gray-600);
         font-style: italic;
-        background: var(--gray-50);
         padding-top: var(--space-3);
         padding-bottom: var(--space-3);
         border-radius: var(--radius-small-default) var(--radius-small-default) var(--radius-small-default) 0;
     }
     
     :global(.note-content a) {
-        color: var(--primary-color);
+        color: black;
         text-decoration: none;
         font-weight: 500;
     }

@@ -703,7 +703,7 @@
     }
     
     .section-title.completed-section {
-        color: var(--gray-500);
+        color: var(--gray-800);
     }
     
     .todos-list {
@@ -878,7 +878,7 @@
     .todo-text {
         flex: 1;
         font-size: 14px;
-        color: var(--gray-700);
+        color: var(--dark-text);
         line-height: 1.4;
         word-wrap: break-word;
         min-width: 0;
@@ -913,7 +913,7 @@
     .delete-button {
         background: none;
         border: none;
-        color: var(--gray-500);
+        color: var(--gray-600);
         cursor: pointer;
         padding: var(--space-1) var(--space-2);
         font-size: 16px;

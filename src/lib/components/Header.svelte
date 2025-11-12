@@ -409,7 +409,7 @@
     
     .title-input {
         font-weight: 600;
-        color: var(--gray-700);
+        color: var(--dark-text);
         font-size: 14px;
         border: 2px solid var(--primary-color);
         border-radius: var(--radius-small-default);
@@ -421,9 +421,8 @@
     }
     
     .owner-email {
-        color: var(--primary-color);
+        color: var(--gray-1000);
         font-weight: 500;
-        background: var(--primary-light);
         padding: 2px var(--space-2);
         border-radius: var(--radius-small-default)px;
         font-size: 12px;
@@ -577,7 +576,7 @@
     
     .hamburger-button:hover {
         background: transparent;
-        color: var(--gray-700);
+        color: var(--dark-text);
     }
     
     .mobile-dropdown {
@@ -601,7 +600,7 @@
         padding: var(--space-3) var(--space-4);
         border: none;
         background: none;
-        color: var(--gray-700);
+        color: var(--dark-text);
         font-size: 14px;
         font-weight: 500;
         text-align: left;

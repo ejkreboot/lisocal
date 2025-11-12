@@ -317,7 +317,7 @@
         margin: 0;
         font-size: 18px;
         font-weight: 600;
-        color: var(--gray-700);
+        color: var(--dark-text);
     }
     
     .close-button {

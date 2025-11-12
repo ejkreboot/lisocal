@@ -470,7 +470,7 @@
         margin: 0;
         font-size: 20px;
         font-weight: 600;
-        color: var(--gray-700);
+        color: var(--dark-text);
         min-width: 180px;
         text-align: center;
     }
@@ -545,7 +545,7 @@
     .hero-title {
         font-size: 48px;
         font-weight: 300;
-        color: var(--gray-700);
+        color: var(--dark-text);
         margin: 0 0 var(--space-4) 0;
         font-family: var(--font-primary);
         letter-spacing: -0.02em;
@@ -628,7 +628,7 @@
     .feature-card h3 {
         font-size: 18px;
         font-weight: 600;
-        color: var(--gray-700);
+        color: var(--dark-text);
         margin: 0 0 var(--space-3) 0;
         font-family: var(--font-primary);
     }

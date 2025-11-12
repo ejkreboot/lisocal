@@ -5,7 +5,7 @@
   --primary-hover: #1976d2;
   --primary-light: #e3f2fd;
   --primary-ultra-light: #f0f8ff;
-  --accent-color: #f47109;
+  --accent-color: #BA5900;
   --accent-hover: #e5640a;
   
   --gray-50: #f8f9fa;
@@ -18,6 +18,8 @@
   --gray-700: #333;
   --gray-800: #1f2937;
   --gray-900: #374151;
+  --gray-1000: var(--gray-600);
+
   
   --success-bg: #d1fae5;
   --success-text: #065f46;
@@ -35,7 +37,9 @@
   /* Typography */
   --font-primary: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-secondary: 'Dosis', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  
+  --text-gray: var(--gray-700);
+  --dark-text: var(--gray-600);
+
   /* Spacing */
   --space-tiny: 1px;
   --space-1: 4px;
@@ -110,7 +114,7 @@ body {
 .text-gray-400 { color: var(--gray-400); }
 .text-gray-500 { color: var(--gray-500); }
 .text-gray-600 { color: var(--gray-600); }
-.text-gray-700 { color: var(--gray-700); }
+.text-gray-700 { color: var(--dark-text); }
 .text-gray-800 { color: var(--gray-800); }
 
 /* Animation */
@@ -259,7 +263,7 @@ body {
 
 .btn-ghost:hover:not(:disabled) {
   background: var(--gray-100);
-  color: var(--gray-700);
+  color: var(--dark-text);
 }
 
 .btn-sm {
@@ -341,7 +345,7 @@ body {
 
 .modal-header h2 {
   margin: 0;
-  color: var(--gray-700);
+  color: var(--dark-text);
   font-size: 20px;
   font-weight: 600;
 }
@@ -366,7 +370,7 @@ body {
 
 .close-button:hover {
   background: var(--gray-100);
-  color: var(--gray-700);
+  color: var(--dark-text);
 }
 
 /* Message/Alert styles */
@@ -455,6 +459,7 @@ body {
   font-size: 10px;
   opacity: 0.9;
   margin-bottom: 0px;
+  color: rgb(0, 0, 0);
 }
 
 .event-title {
@@ -464,7 +469,7 @@ body {
   white-space: nowrap;
   color: transparent;
   background: 
-    linear-gradient(to bottom left, #a9a9a9, #595959);
+    linear-gradient(to bottom left, #776849, #040404);
   background-blend-mode: multiply;
   -webkit-background-clip: text;
   background-clip: text;
