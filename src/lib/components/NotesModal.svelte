@@ -521,7 +521,6 @@
     }
     
     .nav-button {
-        background: var(--gray-50);
         border: 1px solid transparent;
         border-radius: var(--radius-small-default);
         width: 32px;

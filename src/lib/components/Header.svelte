@@ -173,28 +173,28 @@
                             class="todo-button icon-button"
                             title="To-Do List"
                         >
-                            <span class="material-symbols-outlined" style="font-size: 16px;">task_alt</span>
+                            <span class="material-symbols-outlined" style="font-size: 20px;">task_alt</span>
                         </button>
                         <button 
                             onclick={() => showNotesModal = true} 
                             class="notes-button icon-button"
                             title="Scratchpad"
                         >
-                            <span class="material-symbols-outlined" style="font-size: 16px;">sticky_note_2</span>
+                            <span class="material-symbols-outlined" style="font-size: 20px;">sticky_note_2</span>
                         </button>
                         <button 
                             onclick={() => showPomodoroTimer = true} 
                             class="pomodoro-button icon-button"
                             title="Pomodoro Timer"
                         >
-                            <span class="material-symbols-outlined" style="font-size: 16px;">timer</span>
+                            <span class="material-symbols-outlined" style="font-size: 20px;">timer</span>
                         </button>
                         <button 
                             onclick={() => showHabitTracker = true} 
                             class="habit-button icon-button"
                             title="Habit Tracker"
                         >
-                            <span class="material-symbols-outlined" style="font-size: 16px;">self_improvement</span>
+                            <span class="material-symbols-outlined" style="font-size: 20px;">self_improvement</span>
                         </button>
                         {#if canEdit}
                             <button 
@@ -202,7 +202,7 @@
                                 class="external-cal-button icon-button"
                                 title="External Calendars"
                             >
-                                <span class="material-symbols-outlined" style="font-size: 16px;">captive_portal</span>
+                                <span class="material-symbols-outlined" style="font-size: 20px;">captive_portal</span>
                             </button>
                             <button 
                                 onclick={() => showShareDialog = true} 
@@ -210,7 +210,7 @@
                                 disabled={!calendarName}
                                 title="Share Calendar"
                             >
-                                <span class="material-symbols-outlined" style="font-size: 16px;">share</span>
+                                <span class="material-symbols-outlined" style="font-size: 20px;">share</span>
                             </button>
                         {/if}
                         <button 
@@ -218,7 +218,7 @@
                             class="logout-button icon-button"
                             title="Sign Out"
                         >
-                            <span class="material-symbols-outlined" style="font-size: 16px;">logout</span>
+                            <span class="material-symbols-outlined" style="font-size: 20px;">logout</span>
                         </button>
                     {/if}
                 </div>

@@ -601,6 +601,7 @@
     }
     
     .nav-button {
+        background-color: transparent;
         border: 1px solid transparent;
         border-radius: var(--radius-small-default);
         width: 28px;
@@ -831,7 +832,6 @@
     
     :global(.note-content p) {
         margin: 0 0 var(--space-3);
-        color: var(--gray-600);
     }
     
     :global(.note-content ul),
@@ -873,11 +873,10 @@
         padding: var(--space-6) var(--space-5) var(--space-4) var(--space-5);
         margin: var(--space-4) 0;
         border-radius: var(--radius-small-default);
-        color: var(--dark-text);
         font-style: normal;
         font-size: 17px;
         line-height: 1.6;
-        font-family: 'Poiret One', cursive;
+        font-family: 'Sorts Mill Goudy', cursive;
     }
     
     :global(.note-content blockquote::before) {
@@ -899,6 +898,7 @@
         z-index: 1;
         padding-top: var(--space-3);
         font-style: normal;
+        color: var(--gray-600);
     }
     
     :global(.note-content a) {
@@ -934,7 +934,6 @@
     
     :global(.note-content em) {
         font-style: italic;
-        color: var(--gray-500);
         font-size: 13px;
         font-weight: 500;
         letter-spacing: 0.01em;
