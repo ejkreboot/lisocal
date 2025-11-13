@@ -74,6 +74,3 @@ export async function createRainyDay(
 
 // Re-export types for convenience
 export type { RainyDayOptions, Drop, RainPreset };
-
-// Re-export HTML rain functionality
-export { createHTMLRain, createFullPageRain, type HTMLRainOptions } from './html-rain.js';

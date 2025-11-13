@@ -8,9 +8,7 @@ This directory contains the TypeScript integration for rainyday.js, a lightweigh
 src/lib/rainyday/
 ├── index.ts              # Main module with helper functions
 ├── rainyday.d.ts         # TypeScript declarations
-├── html-rain.ts          # HTML element to rain effect converter
-├── RainEffect.svelte     # Image-based rain component
-└── HTMLRainEffect.svelte # HTML element rain component
+└── RainEffect.svelte     # Image-based rain component
 ```
 
 ## Usage in Svelte Components
