@@ -353,6 +353,20 @@
         font-family: var(--font-primary);
     }
     
+    .header {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        padding: var(--space-4) var(--space-6);
+        background: var(--white);
+        box-shadow: var(--shadow-sm);
+        min-width: 850px;
+    }
+
+    .header-center {
+        flex: 4;
+    }
+
     .header-left h1 {
         margin: 0;
         color: #868686;
@@ -360,6 +374,10 @@
         font-weight: 300;
     }
     
+    .header-left {
+        align-items: left;
+    }
+
     .logo-title {
         display: flex;
         align-items: center;
@@ -428,7 +446,7 @@
         font-size: 12px;
     }
 
-        .header-right {
+    .header-right {
         display: flex;
         align-items: center;
         gap: var(--space-1);
