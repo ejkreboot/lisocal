@@ -366,7 +366,7 @@
         {#if canEdit}
             <div class="header-actions">
                 <button 
-                    class="btn btn-sm btn-secondary"
+                    class="btn btn-sm btn-primary"
                     onclick={addNote}
                     title="Add new note"
                     disabled={loading}
@@ -510,9 +510,9 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        min-height: 70px;
-        max-height: 70px;
-        height: 70px;
+        min-height: 60px;
+        max-height: 60px;
+        height: 60px;
     }
     
     .sidebar-header h2 {
@@ -558,7 +558,7 @@
     
     .btn-danger {
         background: #ffebee;
-        color: #f44336;
+        color: #D20E00;
     }
     
     .btn-danger:hover:not(:disabled) {
@@ -630,8 +630,9 @@
         align-items: center;
         justify-content: center;
         gap: var(--space-3);
-        background: var(--white);
-        border-bottom: 0px solid var(--gray-100);
+        background:  #fafafa;
+        border-top: 0px solid var(--gray-500);
+        border-bottom: 0px solid var(--gray-400);
         flex-shrink: 0;
     }
     
@@ -880,11 +881,11 @@
     }
     
     :global(.note-content blockquote::before) {
-        content: '"';
+        content: '“';
         position: absolute;
-        top: var(--space-1);
-        left: var(--space-3);
-        font-size: 48px;
+        top: var(--space-3);
+        left: var(--space-2);
+        font-size: 70px;
         color: var(--primary-color);
         opacity: 0.25;
         font-family: 'Sorts Mill Goudy', serif;

@@ -334,7 +334,7 @@
         display: none;
         flex-shrink: 0;
         width: 25%;
-        min-width: 240px;
+        min-width: 330px;
         max-width: 400px;
         height: calc(100vh - 60px);
         overflow: hidden;
@@ -641,7 +641,7 @@
     }
     
     /* Show sidebar for larger screens */
-    @media (min-width: 1000px) {
+    @media (min-width: 1200px) {
         .sidebar-container {
             display: block;
         }
