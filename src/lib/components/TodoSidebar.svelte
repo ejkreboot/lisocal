@@ -830,7 +830,7 @@
     .drag-handle {
         display: flex;
         align-items: center;
-        color: var(--gray-400);
+        color: var(--gray-600);
         cursor: grab;
         flex-shrink: 0;
     }
@@ -934,7 +934,7 @@
     .delete-button {
         background: none;
         border: none;
-        color: var(--gray-400);
+        color: var(--lighter-text-cool);
         cursor: pointer;
         padding: var(--space-1);
         font-size: 16px;

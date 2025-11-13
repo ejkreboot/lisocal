@@ -39,6 +39,7 @@
   --font-secondary: 'Dosis', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --text-gray: var(--gray-700);
   --dark-text: var(--gray-600);
+  --lighter-text-cool: #5A7090;
 
   /* Spacing */
   --space-tiny: 1px;
@@ -487,13 +488,12 @@ body {
 .delete-event {
   background: none;
   border: none;
-  color: currentColor;
+  color: var(--lighter-text-cool);
   cursor: pointer;
   padding: 0;
   margin-left: var(--space-1);
   font-size: 14px;
   font-weight: bold;
-  opacity: 0.7;
   transition: opacity var(--transition-normal);
   flex-shrink: 0;
 }
@@ -503,11 +503,10 @@ body {
 }
 
 .external-indicator {
-  color: currentColor;
+  color: var(--lighter-text-cool);
   margin-left: var(--space-1);
   font-size: 12px;
   font-weight: normal;
-  opacity: 0.7;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;

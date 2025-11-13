@@ -462,7 +462,6 @@
         width: 36px;
         height: 36px;
         box-sizing: border-box;
-        opacity: 0.5;
     }
     
     .icon-button:hover {
@@ -479,13 +478,13 @@
         cursor: not-allowed;
         transform: none;
         box-shadow: none;
-        opacity: 0.3;
+        opacity: 0.7;
     }
     
     .icon-button:disabled:hover {
         background: transparent;
         border-color: transparent;
-        opacity: 0.3;
+        opacity: 0.7;
     }
     
     .todo-button {
