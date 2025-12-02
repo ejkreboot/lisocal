@@ -19,6 +19,7 @@
     let editText = ''
     let isSaving = false
     let editingEventId: string | null = null
+    let isOpening = false
     
     // Drag and drop state
     let draggedEvent: CalendarEvent | null = null
@@ -49,13 +50,16 @@
         
         // Add global click handler to close editors when clicking outside
         const handleGlobalClick = (event: Event) => {
+            // Don't process if we're in the middle of opening an editor
+            if (isOpening) return
+            
             if (editingCell && event.target instanceof HTMLElement) {
                 // Check if the click was on an input field or inside the calendar
                 const isInsideCalendar = event.target.closest('.calendar-grid, .calendar-agenda')
                 const isInputField = event.target.closest('.event-input, .agenda-event-input')
                 
                 // If clicking outside the calendar or not on an input field, close the editor
-                if (!isInsideCalendar || (!isInputField && !event.target.closest('.calendar-day, .agenda-day'))) {
+                if (!isInsideCalendar || (!isInputField && !event.target.closest('.calendar-day, .agenda-day, .agenda-content'))) {
                     if (editText.trim()) {
                         saveEvent()
                     } else {
@@ -167,6 +171,9 @@
     async function startEditing(row: number, col: number) {
         if (!canEdit) return
         
+        // Set flag to prevent immediate closure
+        isOpening = true
+        
         // If we're already editing a different cell, save the current edit first
         if (editingCell && (editingCell.row !== row || editingCell.col !== col)) {
             await saveEvent()
@@ -182,12 +189,19 @@
             if (input) {
                 input.focus()
             }
+            // Clear the opening flag after the event loop completes
+            setTimeout(() => {
+                isOpening = false
+            }, 100)
         }, 0)
     }
     
     async function startEditingEvent(event: CalendarEvent, row: number, col: number) {
         if (!canEdit) return
         if (event.isExternal) return // External events cannot be edited
+        
+        // Set flag to prevent immediate closure
+        isOpening = true
         
         // If we're already editing a different cell, save the current edit first
         if (editingCell && (editingCell.row !== row || editingCell.col !== col)) {
@@ -215,6 +229,10 @@
                 // Select all text for easy editing
                 input.select()
             }
+            // Clear the opening flag after the event loop completes
+            setTimeout(() => {
+                isOpening = false
+            }, 100)
         }, 0)
     }
     
@@ -812,9 +830,16 @@
                 <div class="agenda-day-name">{new Date(day.date).toLocaleDateString('en', { weekday: 'short' })}</div>
             </div>
             
-            <div class="agenda-content">
+            <div 
+                class="agenda-content"
+                on:click|self={(e) => {
+                    if (canEdit && !isEditing) {
+                        startEditing(Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7)
+                    }
+                }}
+            >
                 {#if dayEvents.length > 0}
-                    <div class="agenda-events">
+                    <div class="agenda-events">                        
                         {#each dayEvents as event}
                             {#if editingEventId === event.id}
                                 <!-- Show input field when editing this specific event -->
