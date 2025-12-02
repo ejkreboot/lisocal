@@ -3,6 +3,7 @@
     import CalendarMonth from '$lib/components/CalendarMonth.svelte'
     import TodoSidebar from '$lib/components/TodoSidebar.svelte'
     import ScratchpadSidebar from '$lib/components/ScratchpadSidebar.svelte'
+    import AmbientCoach from '$lib/components/AmbientCoach.svelte'
     import { user, session, loading, signOut } from '$lib/auth.js'
     import Header from '$lib/components/Header.svelte'
     import { onMount } from 'svelte'
@@ -67,7 +68,15 @@
     let scratchpadHeight = 50 // Default to 50% for scratchpad section
     let sidebarContent: HTMLElement
     let isResizing = false
-    let resizeHandle: HTMLElement
+    let resizeHandle: HTMLElement | null
+    let todoSidebar: any
+    
+    // Handle adding a todo to Best Steps from the scratchpad
+    async function handleAddToBestSteps() {
+        if (todoSidebar?.createTodoInBestSteps) {
+            await todoSidebar.createTodoInBestSteps()
+        }
+    }
     
     // Load saved sidebar split ratio from localStorage on mount
     onMount(() => {
@@ -210,6 +219,7 @@
             <div class="sidebar-content" bind:this={sidebarContent}>
                 <div class="todo-container" style="height: {todoHeight}%;">
                     <TodoSidebar 
+                        bind:this={todoSidebar}
                         {canEdit}
                         {calendarId}
                         shareToken={data.sharedCalendar?.shareToken || null}
@@ -229,6 +239,7 @@
                         {canEdit}
                         {calendarId}
                         shareToken={data.sharedCalendar?.shareToken || null}
+                        onAddToBestSteps={handleAddToBestSteps}
                     />
                 </div>
             </div>
@@ -255,6 +266,13 @@
                     month={currentMonth} 
                     {calendarId}
                     {canEdit}
+                    shareToken={data.sharedCalendar?.shareToken || null}
+                />
+                
+                <!-- Ambient Coach - shown only on larger screens with calendar -->
+                <AmbientCoach 
+                    visible={!!calendarId} 
+                    calendarId={calendarId || ''}
                     shareToken={data.sharedCalendar?.shareToken || null}
                 />
             {:else if !$user}

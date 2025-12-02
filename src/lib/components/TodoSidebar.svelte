@@ -52,13 +52,53 @@
 	let loading = $state(false);
 	let removingTodoIds: Set<string> = $state(new Set());
 
+	// Expose function to create a todo and add it to Best Steps
+	export async function createTodoInBestSteps() {
+		if (!canEdit || !calendarId) return;
+
+		try {
+			const params = shareToken ? `?shareToken=${shareToken}` : '';
+			const authToken = shareToken ? null : await getAuthToken();
+			const today = new Date().toISOString().split('T')[0];
+
+			const response = await fetch(`/api/todos${params}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					...(shareToken ? {} : { Authorization: `Bearer ${authToken}` })
+				},
+				body: JSON.stringify({
+					calendarId,
+					text: 'New action',
+					dailyPriority: true,
+					priorityDate: today
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to create todo');
+			}
+
+			const data = await response.json();
+			todos = [data.todo, ...todos];
+			
+			// Open the new todo in edit mode
+			setTimeout(() => {
+				startEdit(data.todo.id, data.todo.text);
+			}, 0);
+		} catch (error) {
+			console.error('Error creating todo in best steps:', error);
+		}
+	}
+
 	let newTodoText = $state('');
 	let editingId: string | null = $state(null);
 	let editText = $state('');
 	let draggedTodo: any = $state(null);
 	let draggedTodoId: string | null = $state(null);
 	let dragOverIndex = $state(-1);
-	let dragOverSection: 'incomplete' | 'completed' | null = $state(null);
+	let dragOverSection: 'incomplete' | 'completed' | 'best-steps' | null = $state(null);
+	let dragOverBestSteps = $state(false);
 
 	// Tooltip state
 	let tooltip = $state({
@@ -97,6 +137,9 @@
 
 			const data = await response.json();
 			todos = data.todos || [];
+			
+			// Clean up old daily priorities
+			await cleanupOldDailyPriorities();
 		} catch (error) {
 			console.error('Error loading todos:', error);
 			todos = [];
@@ -105,11 +148,119 @@
 		}
 	}
 
+
+
 	async function getAuthToken() {
 		const {
 			data: { session }
 		} = await supabase.auth.getSession();
 		return session?.access_token || '';
+	}
+
+	async function cleanupOldDailyPriorities() {
+		if (!canEdit || !calendarId) return;
+
+		const today = new Date().toISOString().split('T')[0];
+		const outdatedTodos = todos.filter(todo => 
+			todo.daily_priority && 
+			todo.priority_date && 
+			todo.priority_date < today
+		);
+
+		if (outdatedTodos.length === 0) return;
+
+		for (const todo of outdatedTodos) {
+			try {
+				const params = new URLSearchParams({ todoId: todo.id });
+				if (shareToken) params.append('shareToken', shareToken);
+
+				const response = await fetch(`/api/todos?${params}`, {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+						...(shareToken ? {} : { Authorization: `Bearer ${await getAuthToken()}` })
+					},
+					body: JSON.stringify({
+						dailyPriority: false,
+						priorityDate: null
+					})
+				});
+
+				if (response.ok) {
+					todos = todos.map(t => 
+						t.id === todo.id 
+							? { ...t, daily_priority: false, priority_date: null }
+							: t
+					);
+				}
+			} catch (error) {
+				console.error('Error cleaning up old daily priority:', error);
+			}
+		}
+	}
+
+	async function addToBestSteps(todoId: string) {
+		if (!canEdit || !calendarId) return;
+
+		const today = new Date().toISOString().split('T')[0];
+
+		try {
+			const params = new URLSearchParams({ todoId });
+			if (shareToken) params.append('shareToken', shareToken);
+
+			const response = await fetch(`/api/todos?${params}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					...(shareToken ? {} : { Authorization: `Bearer ${await getAuthToken()}` })
+				},
+				body: JSON.stringify({
+					dailyPriority: true,
+					priorityDate: today
+				})
+			});
+
+			if (response.ok) {
+				todos = todos.map(t => 
+					t.id === todoId 
+						? { ...t, daily_priority: true, priority_date: today }
+						: t
+				);
+			}
+		} catch (error) {
+			console.error('Error adding to best steps:', error);
+		}
+	}
+
+	async function removeFromBestSteps(todoId: string) {
+		if (!canEdit || !calendarId) return;
+
+		try {
+			const params = new URLSearchParams({ todoId });
+			if (shareToken) params.append('shareToken', shareToken);
+
+			const response = await fetch(`/api/todos?${params}`, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					...(shareToken ? {} : { Authorization: `Bearer ${await getAuthToken()}` })
+				},
+				body: JSON.stringify({
+					dailyPriority: false,
+					priorityDate: null
+				})
+			});
+
+			if (response.ok) {
+				todos = todos.map(t => 
+					t.id === todoId 
+						? { ...t, daily_priority: false, priority_date: null }
+						: t
+				);
+			}
+		} catch (error) {
+			console.error('Error removing from best steps:', error);
+		}
 	}
 
 	async function addTodo() {
@@ -322,6 +473,44 @@
 		dragOverSection = 'incomplete';
 	}
 
+	function handleBestStepsDragOver(event: DragEvent) {
+		if (!canEdit || !draggedTodo || draggedTodo.completed) return;
+
+		event.preventDefault();
+		if (event.dataTransfer) {
+			event.dataTransfer.dropEffect = 'move';
+		}
+
+		dragOverBestSteps = true;
+	}
+
+	function handleBestStepsDragLeave() {
+		setTimeout(() => {
+			dragOverBestSteps = false;
+		}, 50);
+	}
+
+	async function handleBestStepsDrop(event: DragEvent) {
+		if (!canEdit || !draggedTodo || draggedTodo.completed) return;
+
+		event.preventDefault();
+
+		// Check if we're at the limit (3 best steps)
+		if (bestStepsTodos.length >= 3 && !draggedTodo.daily_priority) {
+			resetDrag();
+			return;
+		}
+
+		// If todo is already in best steps, do nothing
+		if (draggedTodo.daily_priority) {
+			resetDrag();
+			return;
+		}
+
+		await addToBestSteps(draggedTodo.id);
+		resetDrag();
+	}
+
 	function handleDragLeave() {
 		setTimeout(() => {
 			dragOverIndex = -1;
@@ -339,18 +528,18 @@
 			return;
 		}
 
-		const draggedIndex = incompleteTodos.findIndex((t) => t.id === draggedTodo.id);
+		const draggedIndex = regularIncompleteTodos.findIndex((t: any) => t.id === draggedTodo.id);
 
 		if (draggedIndex === -1) {
 			resetDrag();
 			return;
 		}
 
-		const newIncompleteList = [...incompleteTodos];
+		const newIncompleteList = [...regularIncompleteTodos];
 		const [movedItem] = newIncompleteList.splice(draggedIndex, 1);
 		newIncompleteList.splice(targetIndex, 0, movedItem);
 
-		todos = [...newIncompleteList, ...completedTodos];
+		todos = [...bestStepsTodos, ...newIncompleteList, ...completedTodos];
 
 		await saveReorder(newIncompleteList.map((t) => t.id));
 
@@ -391,6 +580,7 @@
 		draggedTodoId = null;
 		dragOverIndex = -1;
 		dragOverSection = null;
+		dragOverBestSteps = false;
 	}
 
 	function handleDragEnd() {
@@ -422,8 +612,11 @@
 		};
 	}
 
+
+
 	let completedTodos = $derived(todos.filter((t) => t.completed));
-	let incompleteTodos = $derived(todos.filter((t) => !t.completed));
+	let bestStepsTodos = $derived(todos.filter((t) => !t.completed && t.daily_priority));
+	let regularIncompleteTodos = $derived(todos.filter((t) => !t.completed && !t.daily_priority));
 </script>
 
 <aside class="todo-sidebar">
@@ -442,6 +635,7 @@
                     aria-label="New task description"
                     disabled={loading}
                 />
+
                 <button
                     class="btn btn-primary add-todo-button"
                     onclick={addTodo}
@@ -463,11 +657,99 @@
 					<p>Loading...</p>
 				</div>
 			{:else}
-				{#if incompleteTodos.length > 0}
+				<!-- Best Steps Section -->
+				<div class="best-steps-section"
+					class:drag-over={dragOverBestSteps}
+					class:has-items={bestStepsTodos.length > 0}
+					ondragover={handleBestStepsDragOver}
+					ondragleave={handleBestStepsDragLeave}
+					ondrop={handleBestStepsDrop}
+					role="region"
+					aria-label="Best steps priority tasks"
+				>
+					<h3 class="section-title">
+						<span class="material-symbols-outlined best-steps-icon">hiking</span>
+						Best Steps ({bestStepsTodos.length}/3)
+					</h3>
+					{#if bestStepsTodos.length > 0}
+						<div class="best-steps-list">
+							{#each bestStepsTodos as todo (todo.id)}
+								<div
+									class="todo-item best-step-item todo-item-enter"
+									class:removing={removingTodoIds.has(todo.id)}
+									data-todo-id={todo.id}
+									role="listitem"
+									in:fadeFlowIn={{ duration: 250 }}
+									out:fadeFlowOut={{ duration: 300 }}
+								>
+									<div class="todo-content">
+										{#if canEdit}
+											<button
+												class="todo-checkbox best-step-checkbox"
+												onclick={() => toggleTodo(todo.id)}
+												aria-label="Mark task as completed: {todo.text}"
+											>
+												<span class="checkbox-icon">{todo.completed ? '✓' : ''}</span>
+											</button>
+										{:else}
+											<div class="todo-checkbox best-step-checkbox readonly">
+												<span class="checkbox-icon">{todo.completed ? '✓' : ''}</span>
+											</div>
+										{/if}
+
+										{#if editingId === todo.id}
+											<input
+												class="input edit-todo-input"
+												bind:value={editText}
+												onkeydown={(e) => {
+													e.stopPropagation();
+													handleEditKeydown(e);
+												}}
+												onblur={saveEdit}
+											/>
+										{:else}
+											<!-- svelte-ignore a11y_click_events_have_key_events -->
+											<!-- svelte-ignore a11y_no_static_element_interactions -->
+											<span
+												class="todo-text best-step-text"
+												class:editable={canEdit}
+												onclick={() => canEdit && startEdit(todo.id, todo.text)}
+												onmouseenter={(e) => showTooltip(e, todo.text)}
+												onmouseleave={hideTooltip}
+												title={canEdit ? 'Click to edit' : ''}
+											>
+												{todo.text}
+											</span>
+										{/if}
+									</div>
+
+									{#if canEdit}
+										<button
+											class="remove-from-best-steps"
+											onclick={() => removeFromBestSteps(todo.id)}
+											title="Remove from Best Steps"
+										>
+											↓
+										</button>
+										<button
+											class="delete-button"
+											onclick={() => deleteTodo(todo.id)}
+											aria-label="Delete task: {todo.text}"
+											title="Delete task"
+										>
+											×
+										</button>
+									{/if}
+								</div>
+							{/each}
+						</div>
+					{/if}
+				</div>
+
+				{#if regularIncompleteTodos.length > 0}
 					<div class="todo-section">
-						<h3 class="section-title">To Do ({incompleteTodos.length})</h3>
 						<div class="todos-list">
-							{#each incompleteTodos as todo, index (todo.id)}
+							{#each regularIncompleteTodos as todo, index (todo.id)}
 								<div
 									class="todo-item todo-item-enter"
 									class:completed={todo.completed}
@@ -618,7 +900,7 @@
 					</div>
 				{/if}
 
-				{#if todos.length === 0}
+				{#if bestStepsTodos.length === 0 && regularIncompleteTodos.length === 0 && completedTodos.length === 0}
 					<div class="empty-state">
 						<p>No tasks yet!</p>
 						{#if canEdit}
@@ -629,6 +911,8 @@
 			{/if}
 		</div>
 	</div>
+
+
 </aside>
 
 {#if tooltip.visible}
@@ -677,12 +961,7 @@
 		overflow: hidden;
 	}
 
-	.add-todo-section {
-		padding: var(--space-4) var(--space-5);
-		border-bottom: 1px solid var(--gray-100);
-		background: var(--gray-50);
-		flex-shrink: 0;
-	}
+
 
 	.add-todo-input-container {
 		display: flex;
@@ -713,6 +992,8 @@
 		font-size: 16px;
 	}
 
+
+
 	.todos-container {
 		overflow-y: auto;
 		flex: 1;
@@ -735,6 +1016,15 @@
 		text-transform: uppercase;
 		letter-spacing: 0.5px;
 		font-family: var(--font-primary);
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+	}
+	
+	.section-title .best-steps-icon {
+		font-size: 16px;
+		color: #ff9800;
+		font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
 	}
 
 	.section-title.completed-section {
@@ -1024,4 +1314,88 @@
 			transform: translateY(0);
 		}
 	}
+
+	/* Best Steps Section Styles */
+	.best-steps-section {
+		margin-bottom: var(--space-5);
+		padding: var(--space-3);
+		border: 0.5px solid #fb923c;
+		border-radius: var(--radius-small-default);
+		background: #fef3e2;
+		transition: all var(--transition-normal);
+		position: relative;
+	}
+
+	.best-steps-section.has-items {
+		padding: var(--space-3);
+		background: #fef3e2;
+		border-color: #fb923c;
+	}
+
+	.best-steps-section.drag-over {
+		background: #fed7aa;
+		border: 2px dashed #fb923c;
+		padding: var(--space-3);
+	}
+
+	.best-steps-section.drag-over .section-title::after {
+		content: ' - Drop tasks here';
+		font-style: italic;
+		font-weight: normal;
+		color: #c2410c;
+	}
+
+	.best-steps-list {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-2);
+	}
+
+	.best-step-item {
+		border-left: 3px solid #fb923c !important;
+		background: var(--white) !important;
+		border-top: 1px solid #fdba74 !important;
+		border-right: 1px solid #fdba74 !important;
+		border-bottom: 1px solid #fdba74 !important;
+	}
+
+	.best-step-item:hover {
+		border-left-color: #ea580c !important;
+		background: #fef3e2 !important;
+	}
+
+	.best-step-checkbox {
+		border-color: #fb923c !important;
+	}
+
+	.best-step-text {
+		font-weight: 500 !important;
+		color: var(--dark-text) !important;
+	}
+
+	.remove-from-best-steps {
+		background: none;
+		border: none;
+		color: #fb923c;
+		cursor: pointer;
+		padding: var(--space-1);
+		font-size: 14px;
+		font-weight: normal;
+		border-radius: var(--radius-small-default);
+		transition: all var(--transition-normal);
+		flex-shrink: 0;
+		line-height: 1;
+		margin-right: var(--space-1);
+	}
+
+	.remove-from-best-steps:hover {
+		background: #fed7aa;
+		color: #ea580c;
+	}
+
+	.remove-from-best-steps:active {
+		transform: scale(0.95);
+	}
+
+
 </style>

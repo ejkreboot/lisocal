@@ -29,8 +29,18 @@ export const GET: RequestHandler = async ({ url, request }) => {
 
             const { data, error } = await supabaseAdmin
                 .from('todos')
-                .select('*')
+                .select(`
+                    *,
+                    goals:goal_id (
+                        id,
+                        title,
+                        color,
+                        category
+                    )
+                `)
                 .eq('calendar_id', calendarId)
+                .order('daily_priority', { ascending: false })
+                .order('priority_level', { ascending: false })
                 .order('completed', { ascending: true })
                 .order('sort_index', { ascending: true });
 
@@ -55,8 +65,18 @@ export const GET: RequestHandler = async ({ url, request }) => {
 
             const { data, error } = await supabaseAdmin
                 .from('todos')
-                .select('*')
+                .select(`
+                    *,
+                    goals:goal_id (
+                        id,
+                        title,
+                        color,
+                        category
+                    )
+                `)
                 .eq('calendar_id', calendarId)
+                .order('daily_priority', { ascending: false })
+                .order('priority_level', { ascending: false })
                 .order('completed', { ascending: true })
                 .order('sort_index', { ascending: true });
 
@@ -79,7 +99,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
     try {
         const shareToken = url.searchParams.get('shareToken');
         const body = await request.json();
-        const { calendarId, text } = body;
+        const { calendarId, text, goalId, priorityLevel, dailyPriority, priorityDate } = body;
 
         
         if (!calendarId || !text?.trim()) {
@@ -120,9 +140,21 @@ export const POST: RequestHandler = async ({ request, url }) => {
                     calendar_id: calendarId,
                     text: text.trim(),
                     completed: false,
-                    sort_index: nextSortIndex
+                    sort_index: nextSortIndex,
+                    goal_id: goalId || null,
+                    priority_level: priorityLevel || 0,
+                    daily_priority: dailyPriority || false,
+                    priority_date: priorityDate || null
                 })
-                .select()
+                .select(`
+                    *,
+                    goals:goal_id (
+                        id,
+                        title,
+                        color,
+                        category
+                    )
+                `)
                 .single();
 
             if (error) {
@@ -163,9 +195,21 @@ export const POST: RequestHandler = async ({ request, url }) => {
                     calendar_id: calendarId,
                     text: text.trim(),
                     completed: false,
-                    sort_index: nextSortIndex
+                    sort_index: nextSortIndex,
+                    goal_id: goalId || null,
+                    priority_level: priorityLevel || 0,
+                    daily_priority: dailyPriority || false,
+                    priority_date: priorityDate || null
                 })
-                .select()
+                .select(`
+                    *,
+                    goals:goal_id (
+                        id,
+                        title,
+                        color,
+                        category
+                    )
+                `)
                 .single();
 
             
@@ -276,17 +320,29 @@ export const PUT: RequestHandler = async ({ request, url }) => {
                 return json({ error: 'Edit permission required' }, { status: 403 });
             }
 
-            // Regular update (text, completion status)
+            // Regular update (text, completion status, goal, priority)
             const updateData: any = {};
             if (body.text !== undefined) updateData.text = body.text.trim();
             if (body.completed !== undefined) updateData.completed = body.completed;
+            if (body.goalId !== undefined) updateData.goal_id = body.goalId || null;
+            if (body.priorityLevel !== undefined) updateData.priority_level = body.priorityLevel || 0;
+            if (body.dailyPriority !== undefined) updateData.daily_priority = body.dailyPriority || false;
+            if (body.priorityDate !== undefined) updateData.priority_date = body.priorityDate || null;
 
             const { data, error } = await supabaseAdmin
                 .from('todos')
                 .update(updateData)
                 .eq('id', todoId)
                 .eq('calendar_id', sharedLink.calendar_id)
-                .select()
+                .select(`
+                    *,
+                    goals:goal_id (
+                        id,
+                        title,
+                        color,
+                        category
+                    )
+                `)
                 .single();
 
             if (error) {
@@ -308,16 +364,28 @@ export const PUT: RequestHandler = async ({ request, url }) => {
                 return json({ error: 'Invalid token' }, { status: 401 });
             }
 
-            // Regular update (text, completion status)
+            // Regular update (text, completion status, goal, priority)
             const updateData: any = {};
             if (body.text !== undefined) updateData.text = body.text.trim();
             if (body.completed !== undefined) updateData.completed = body.completed;
+            if (body.goalId !== undefined) updateData.goal_id = body.goalId || null;
+            if (body.priorityLevel !== undefined) updateData.priority_level = body.priorityLevel || 0;
+            if (body.dailyPriority !== undefined) updateData.daily_priority = body.dailyPriority || false;
+            if (body.priorityDate !== undefined) updateData.priority_date = body.priorityDate || null;
 
             const { data, error } = await supabaseAdmin
                 .from('todos')
                 .update(updateData)
                 .eq('id', todoId)
-                .select()
+                .select(`
+                    *,
+                    goals:goal_id (
+                        id,
+                        title,
+                        color,
+                        category
+                    )
+                `)
                 .single();
 
             if (error) {

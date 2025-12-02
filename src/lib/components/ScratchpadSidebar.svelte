@@ -4,10 +4,11 @@
     import { getRandomQuote, formatQuoteAsNote, type Quote } from '$lib/calendar-utils.js'
     import quotes from '$lib/assets/quotes.json'
     
-    let { canEdit = true, calendarId, shareToken = null }: {
+    let { canEdit = true, calendarId, shareToken = null, onAddToBestSteps = null }: {
         canEdit?: boolean
         calendarId: string
         shareToken?: string | null
+        onAddToBestSteps?: (() => Promise<void>) | null
     } = $props()
     
     let notes: any[] = $state([])
@@ -21,12 +22,34 @@
     // Local state for "Thought for the day" note (not saved to database)
     let thoughtOfDayNote: any = $state(null)
     
+    // Coaching prompt state
+    let coachingPrompt = $state('')
+    
     // Load notes when calendarId changes
     $effect(() => {
         if (calendarId) {
             loadNotes()
         }
     })
+    
+    // Load coaching prompt
+    async function loadCoachingPrompt() {
+        try {
+            const response = await fetch('/api/coaching-prompts?role=Thought Of The Day Connection')
+            if (response.ok) {
+                const data = await response.json()
+                coachingPrompt = data.prompt?.prompt || ''
+            }
+        } catch (error) {
+            console.error('Error loading coaching prompt:', error)
+        }
+    }
+    
+    // Handle adding a Best Steps todo
+    async function handleAddToBestSteps() {
+        if (!onAddToBestSteps) return
+        await onAddToBestSteps()
+    }
     
     async function loadNotes() {
         if (!calendarId) return
@@ -95,6 +118,9 @@
             if (thoughtIndex !== -1) {
                 currentNoteIndex = thoughtIndex
             }
+            
+            // Load coaching prompt
+            loadCoachingPrompt()
         } else {
             // Create a new "Thought for the day" note
             const randomQuote = getRandomQuote(quotes as Quote[])
@@ -110,6 +136,9 @@
             // Add to beginning of notes array and make it current
             notes = [thoughtOfDayNote, ...loadedNotes]
             currentNoteIndex = 0
+            
+            // Load coaching prompt
+            loadCoachingPrompt()
         }
     }
     
@@ -319,6 +348,13 @@
     // Get current note
     let currentNote = $derived(notes[currentNoteIndex] || null)
     
+    // Check if current note is the thought of the day
+    let isThoughtOfDay = $derived(
+        currentNote && currentNote.isLocal && 
+        currentNote.content && 
+        currentNote.content.split('\n')[0].replace(/^#+\s*/, '').trim() === 'Thought for the day'
+    )
+    
     // Render markdown content
     let renderedContent = $derived(
         currentNote && !editingContent 
@@ -484,6 +520,21 @@
                     >
                         {@html renderedContent}
                     </div>
+                    
+                    {#if isThoughtOfDay && coachingPrompt}
+                        <div class="coaching-prompt-container">
+                            {#if canEdit && onAddToBestSteps}
+                                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                <div class="coaching-prompt-icon" onclick={handleAddToBestSteps} title="Add to Best Steps">
+                                    <span class="material-symbols-outlined">hiking</span>
+                                </div>
+                            {/if}
+                            <div class="coaching-prompt-text">
+                                {coachingPrompt}
+                            </div>
+                        </div>
+                    {/if}
                 {/if}
             </div>
         {/if}
@@ -938,5 +989,56 @@
         font-size: 13px;
         font-weight: 500;
         letter-spacing: 0.01em;
+    }
+    
+    .coaching-prompt-container {
+        display: flex;
+        gap: var(--space-3);
+        align-items: flex-start;
+        margin-top: var(--space-6);
+        padding: var(--space-4) var(--space-5);
+        background: #fef3e2;
+        border-left: 2px solid #fb923c;
+        border-radius: 0 var(--radius-small-default) var(--radius-small-default) 0;
+        transition: all var(--transition-normal);
+    }
+    
+    .coaching-prompt-container:hover {
+        background: #fed7aa;
+    }
+    
+    .coaching-prompt-text {
+        flex: 1;
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--gray-700);
+        font-style: italic;
+        font-family: 'Sorts Mill Goudy', serif;
+    }
+    
+    .coaching-prompt-icon {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(255, 152, 0, 0.15);
+        border: 1px solid #fb923c;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+    }
+    
+    .coaching-prompt-icon .material-symbols-outlined {
+        font-size: 18px;
+        color: #ff9800;
+        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+    }
+    
+    .coaching-prompt-icon:hover {
+        background: rgba(255, 152, 0, 0.3);
+        border-color: #f97316;
+        transform: scale(1.1);
     }
 </style>

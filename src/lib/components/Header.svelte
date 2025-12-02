@@ -6,6 +6,7 @@
     import NotesModal from '$lib/components/NotesModal.svelte'
     import PomodoroTimer from '$lib/components/PomodoroTimer.svelte'
     import HabitTrackerModal from '$lib/components/HabitTrackerModal.svelte'
+    import AmbientCoachModal from '$lib/components/AmbientCoachModal.svelte'
 
     let { data, calendarName, calendarId } = $props();
 
@@ -18,6 +19,7 @@
     let showExternalCalendarModal = $state(false)
     let showPomodoroTimer = $state(false)
     let showHabitTracker = $state(false)
+    let showAmbientCoach = $state(false)
 
     function startEditingTitle() {
         if (!$user || !calendarName) return
@@ -196,6 +198,13 @@
                         >
                             <span class="material-symbols-outlined" style="font-size: 20px;">self_improvement</span>
                         </button>
+                        <button 
+                            onclick={() => showAmbientCoach = true} 
+                            class="coach-button icon-button"
+                            title="Ambient Coach"
+                        >
+                            <span class="material-symbols-outlined" style="font-size: 20px;">psychology</span>
+                        </button>
                         {#if canEdit}
                             <button 
                                 onclick={() => showExternalCalendarModal = true} 
@@ -271,6 +280,13 @@
                                 <span class="material-symbols-outlined">self_improvement</span>
                                 Habit Tracker
                             </button>
+                            <button 
+                                onclick={() => { showAmbientCoach = true; closeMobileMenu(); }} 
+                                class="mobile-menu-item"
+                            >
+                                <span class="material-symbols-outlined">psychology</span>
+                                Ambient Coach
+                            </button>
                             {#if canEdit}
                                 <button 
                                     onclick={() => { showExternalCalendarModal = true; closeMobileMenu(); }} 
@@ -344,6 +360,14 @@
     on:close={() => showHabitTracker = false}
 />
 
+<AmbientCoachModal 
+    bind:isOpen={showAmbientCoach}
+    {canEdit}
+    calendarId={calendarId || ''}
+    shareToken={data?.sharedCalendar?.shareToken || null}
+    on:close={() => showAmbientCoach = false}
+/>
+
     <style>
             /* Typography overrides */
     .header,
@@ -360,7 +384,7 @@
         padding: var(--space-4) var(--space-6);
         background: var(--white);
         box-shadow: var(--shadow-sm);
-        min-width: 850px;
+        min-width: 100%;
     }
 
     .header-center {
@@ -543,6 +567,16 @@
     .habit-button:hover {
         background: transparent;
         color: #db2777;
+    }
+    
+    .coach-button {
+        background: transparent;
+        color: #7c3aed;
+    }
+    
+    .coach-button:hover {
+        background: transparent;
+        color: #6d28d9;
     }
     
     .external-cal-button {
