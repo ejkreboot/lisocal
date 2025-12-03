@@ -5,6 +5,10 @@ A seamless, easy personal calendar. Built with SvelteKit and Supabase.
 ## Features
 
 - **Effortless Event Entry**: Click any day and start typing. Use natural time formats like "8A-9A Meeting" or just "All day event"
+- **To-Do List Management**: Track tasks alongside your calendar with a clean sidebar interface. Mark items complete, organize goals, and stay on top of your commitments
+- **External Calendar Import**: Import events from external calendars in ICS/iCal format. Supports automatic syncing to keep your calendar up-to-date with events from other sources
+- **Scratchpad**: Quick-access sidebar for jotting down thoughts, ideas, and temporary notes without leaving your calendar view
+- **Ambient Coaching**: Gentle, unobtrusive prompts that guide you towards your transformative goals. Set your aspirations and receive contextual encouragement throughout your day
 - **OTP Authentication**: Passwordless sign-in with 6-digit email codes
 - **Shared Calendars**: Generate UUID-based shareable links for view or edit access
 - **Clean Month View**: Focus on the calendar with minimal UI friction
@@ -62,6 +66,27 @@ A seamless, easy personal calendar. Built with SvelteKit and Supabase.
 - Sign in and use the API endpoint `/api/share` to create shared links
 - Share the generated URL for view or edit access
 - Links can optionally expire after a set number of days
+
+### To-Do Management
+- Access your to-do list via the sidebar
+- Add tasks with optional goal associations
+- Mark items complete and track your progress
+- Integrate your goals with the ambient coaching feature
+
+### External Calendar Import
+- Import ICS/iCal files from other calendar applications
+- Enable automatic syncing to keep external events current
+- Manage imported calendars with custom colors and visibility settings
+
+### Scratchpad
+- Quick notes sidebar for capturing fleeting thoughts
+- Persistent storage without cluttering your calendar
+- Perfect for brainstorming and temporary reminders
+
+### Ambient Coaching
+- Define your transformative goals in the coaching modal
+- Receive gentle, context-aware prompts throughout your calendar experience
+- Stay aligned with your aspirations without intrusive notifications
 
 ## Development
 
