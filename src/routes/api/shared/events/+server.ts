@@ -44,15 +44,14 @@ export const GET: RequestHandler = async ({ url }) => {
             .from('events')
             .select('*')
             .eq('calendar_id', sharedLink.calendar_id)
-            .order('start_date')
-            .order('start_time')
+            .order('start_datetime_utc')
         
         if (startDate) {
-            eventsQuery = eventsQuery.gte('start_date', startDate)
+            eventsQuery = eventsQuery.gte('start_datetime_utc', startDate)
         }
         
         if (endDate) {
-            eventsQuery = eventsQuery.lte('start_date', endDate)
+            eventsQuery = eventsQuery.lte('start_datetime_utc', endDate)
         }
         
         const { data: events, error: eventsError } = await eventsQuery
@@ -122,10 +121,8 @@ export const POST: RequestHandler = async ({ request, url }) => {
                 calendar_id: sharedLink.calendar_id,
                 title: eventData.title,
                 description: eventData.description || null,
-                start_date: eventData.start_date,
-                end_date: eventData.end_date || null,
-                start_time: eventData.start_time || null,
-                end_time: eventData.end_time || null,
+                start_datetime_utc: eventData.start_datetime_utc,
+                end_datetime_utc: eventData.end_datetime_utc || null,
                 is_all_day: eventData.is_all_day || false
             })
             .select()
@@ -186,10 +183,8 @@ export const PUT: RequestHandler = async ({ request, url }) => {
             .update({
                 title: eventData.title,
                 description: eventData.description,
-                start_date: eventData.start_date,
-                end_date: eventData.end_date,
-                start_time: eventData.start_time,
-                end_time: eventData.end_time,
+                start_datetime_utc: eventData.start_datetime_utc,
+                end_datetime_utc: eventData.end_datetime_utc,
                 is_all_day: eventData.is_all_day
             })
             .eq('id', eventId)

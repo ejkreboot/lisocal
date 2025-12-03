@@ -2,7 +2,6 @@ import { json, error } from '@sveltejs/kit'
 import type { RequestHandler } from '@sveltejs/kit'
 import { supabaseAdmin } from '$lib/supabase-admin.js'
 import ical from 'node-ical'
-import { formatDateForDb } from '$lib/calendar-utils.js'
 
 interface SyncRequest {
     url: string
@@ -108,10 +107,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
             calendar_id: string
             title: string
             description?: string
-            start_date: string
-            end_date?: string
-            start_time?: string
-            end_time?: string
+            start_datetime_utc: string
+            end_datetime_utc?: string
             is_all_day: boolean
             external_id: string
             external_calendar_url: string
@@ -136,29 +133,16 @@ export const POST: RequestHandler = async ({ locals, request }) => {
             // Determine if it's an all-day event
             const isAllDay = icalEvent.datetype === 'date'
             
-            // Format dates
-            const startDate = formatDateForDb(icalEvent.start)
-            const endDate = icalEvent.end ? formatDateForDb(icalEvent.end) : undefined
-            
-            // Format times (only for non-all-day events)
-            let startTime: string | undefined
-            let endTime: string | undefined
-            
-            if (!isAllDay) {
-                startTime = icalEvent.start.toTimeString().slice(0, 8) // HH:MM:SS format
-                if (icalEvent.end) {
-                    endTime = icalEvent.end.toTimeString().slice(0, 8)
-                }
-            }
+            // Store as UTC timestamp - node-ical already gives us the correct Date object
+            const startDatetimeUtc = icalEvent.start.toISOString()
+            const endDatetimeUtc = icalEvent.end ? icalEvent.end.toISOString() : undefined
 
             eventsToImport.push({
                 calendar_id: calendar.id,
                 title: icalEvent.summary,
                 description: icalEvent.description || undefined,
-                start_date: startDate,
-                end_date: endDate,
-                start_time: startTime,
-                end_time: endTime,
+                start_datetime_utc: startDatetimeUtc,
+                end_datetime_utc: endDatetimeUtc,
                 is_all_day: isAllDay,
                 external_id: icalEvent.uid,
                 external_calendar_url: url
