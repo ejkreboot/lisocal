@@ -6,10 +6,8 @@ export interface CalendarEvent {
     id: string
     title: string
     description?: string
-    startDate: string
-    endDate?: string
-    startTime?: string
-    endTime?: string
+    startDatetimeUtc: string // ISO 8601 UTC timestamp
+    endDatetimeUtc?: string // ISO 8601 UTC timestamp
     isAllDay: boolean
     externalId?: string // UID from external ICS calendar
     externalCalendarUrl?: string // URL of external calendar
@@ -96,6 +94,73 @@ export function formatDateForDb(date: Date): string {
  */
 export function parseDateFromDb(dateString: string): Date {
     return new Date(dateString + 'T00:00:00')
+}
+
+/**
+ * Convert a local date/time to UTC ISO string for database storage
+ * @param date - The date (YYYY-MM-DD or Date object)
+ * @param time - Optional time in HH:MM format (24-hour). If null, uses midnight.
+ * @returns ISO 8601 UTC timestamp string
+ */
+export function toUtcTimestamp(date: Date | string, time?: string | null): string {
+    let dateObj: Date
+    
+    if (typeof date === 'string') {
+        dateObj = new Date(date + 'T00:00:00')
+    } else {
+        dateObj = new Date(date)
+    }
+    
+    if (time) {
+        const [hours, minutes] = time.split(':').map(Number)
+        dateObj.setHours(hours, minutes, 0, 0)
+    } else {
+        dateObj.setHours(0, 0, 0, 0)
+    }
+    
+    return dateObj.toISOString()
+}
+
+/**
+ * Convert a UTC timestamp to local date
+ * @param utcTimestamp - ISO 8601 UTC timestamp
+ * @returns Date object in browser's local timezone
+ */
+export function fromUtcTimestamp(utcTimestamp: string): Date {
+    return new Date(utcTimestamp)
+}
+
+/**
+ * Extract local date string (YYYY-MM-DD) from UTC timestamp
+ * @param utcTimestamp - ISO 8601 UTC timestamp
+ * @returns Date string in YYYY-MM-DD format (in browser's local timezone)
+ */
+export function getLocalDateFromUtc(utcTimestamp: string): string {
+    const date = new Date(utcTimestamp)
+    return formatDateForDb(date)
+}
+
+/**
+ * Extract local time string (HH:MM) from UTC timestamp
+ * @param utcTimestamp - ISO 8601 UTC timestamp
+ * @returns Time string in HH:MM format (in browser's local timezone)
+ */
+export function getLocalTimeFromUtc(utcTimestamp: string): string {
+    const date = new Date(utcTimestamp)
+    const hours = date.getHours().toString().padStart(2, '0')
+    const minutes = date.getMinutes().toString().padStart(2, '0')
+    return `${hours}:${minutes}`
+}
+
+/**
+ * Check if a UTC timestamp falls on a specific local date
+ * @param utcTimestamp - ISO 8601 UTC timestamp
+ * @param localDate - Date object in local timezone
+ * @returns true if the UTC timestamp, when converted to local time, is on the given date
+ */
+export function isUtcTimestampOnLocalDate(utcTimestamp: string, localDate: Date): boolean {
+    const eventDate = new Date(utcTimestamp)
+    return isSameDay(eventDate, localDate)
 }
 
 /**

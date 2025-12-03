@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { getCalendarGrid, formatTimeForDisplay, parseEventInput, formatDateForDb, type CalendarEvent, type CalendarDay } from '$lib/calendar-utils.js'
+    import { getCalendarGrid, formatTimeForDisplay, parseEventInput, formatDateForDb, toUtcTimestamp, getLocalDateFromUtc, getLocalTimeFromUtc, isUtcTimestampOnLocalDate, type CalendarEvent, type CalendarDay } from '$lib/calendar-utils.js'
     import { supabase } from '$lib/supabase.js'
     import { onMount, createEventDispatcher } from 'svelte'
     import { browser } from '$app/environment'
@@ -92,8 +92,11 @@
             }
         }
         
-        const startDate = formatDateForDb(new Date(year, month, 1))
-        const endDate = formatDateForDb(new Date(year, month + 1, 0))
+        // Query by UTC timestamps for the month range
+        const startOfMonth = new Date(year, month, 1)
+        const endOfMonth = new Date(year, month + 1, 0, 23, 59, 59)
+        const startDate = toUtcTimestamp(startOfMonth)
+        const endDate = toUtcTimestamp(endOfMonth)
         
         let data, error
         
@@ -118,10 +121,9 @@
                 .from('events')
                 .select('*')
                 .eq('calendar_id', calendarId)
-                .gte('start_date', startDate)
-                .lte('start_date', endDate)
-                .order('start_date')
-                .order('start_time')
+                .gte('start_datetime_utc', startDate)
+                .lte('start_datetime_utc', endDate)
+                .order('start_datetime_utc')
             
             data = result.data
             error = result.error
@@ -136,21 +138,19 @@
             id: event.id,
             title: event.title,
             description: event.description,
-            startDate: event.start_date,
-            endDate: event.end_date,
-            startTime: event.start_time,
-            endTime: event.end_time,
+            startDatetimeUtc: event.start_datetime_utc,
+            endDatetimeUtc: event.end_datetime_utc,
             isAllDay: event.is_all_day,
             externalId: event.external_id,
             externalCalendarUrl: event.external_calendar_url,
             isExternal: !!event.external_id
         }))
         
-        // Distribute events to calendar days
+        // Distribute events to calendar days (convert UTC to local date)
         calendarGrid = calendarGrid.map(day => ({
             ...day,
             events: events
-                .filter(event => event.startDate === formatDateForDb(day.date))
+                .filter(event => isUtcTimestampOnLocalDate(event.startDatetimeUtc, day.date))
                 .sort((a, b) => {
                     // All-day events should appear first
                     if (a.isAllDay && !b.isAllDay) return -1
@@ -158,9 +158,7 @@
                     
                     // Among scheduled events, sort by start time
                     if (!a.isAllDay && !b.isAllDay) {
-                        if (a.startTime && b.startTime) {
-                            return a.startTime.localeCompare(b.startTime)
-                        }
+                        return a.startDatetimeUtc.localeCompare(b.startDatetimeUtc)
                     }
                     
                     return 0
@@ -211,11 +209,11 @@
         editingCell = { row, col }
         editingEventId = event.id
         
-        // Convert event back to input format
+        // Convert event back to input format (convert UTC to local time)
         let eventText = event.title
-        if (!event.isAllDay && event.startTime) {
-            const startTime = formatTimeForDisplay(event.startTime)
-            const endTime = event.endTime ? formatTimeForDisplay(event.endTime) : ''
+        if (!event.isAllDay) {
+            const startTime = formatTimeForDisplay(getLocalTimeFromUtc(event.startDatetimeUtc))
+            const endTime = event.endDatetimeUtc ? formatTimeForDisplay(getLocalTimeFromUtc(event.endDatetimeUtc)) : ''
             eventText = endTime ? `${startTime}-${endTime} ${event.title}` : `${startTime} ${event.title}`
         }
         
@@ -246,6 +244,10 @@
         
         const parsed = parseEventInput(editText)
         
+        // Convert local date/time to UTC timestamps
+        const startDatetimeUtc = toUtcTimestamp(selectedDay.date, parsed.startTime)
+        const endDatetimeUtc = parsed.endTime ? toUtcTimestamp(selectedDay.date, parsed.endTime) : null
+        
         let error
         
         if (shareToken) {
@@ -260,9 +262,8 @@
                         },
                         body: JSON.stringify({
                             title: parsed.title,
-                            start_date: formatDateForDb(selectedDay.date),
-                            start_time: parsed.startTime,
-                            end_time: parsed.endTime,
+                            start_datetime_utc: startDatetimeUtc,
+                            end_datetime_utc: endDatetimeUtc,
                             is_all_day: parsed.isAllDay
                         })
                     })
@@ -279,9 +280,8 @@
                         },
                         body: JSON.stringify({
                             title: parsed.title,
-                            start_date: formatDateForDb(selectedDay.date),
-                            start_time: parsed.startTime,
-                            end_time: parsed.endTime,
+                            start_datetime_utc: startDatetimeUtc,
+                            end_datetime_utc: endDatetimeUtc,
                             is_all_day: parsed.isAllDay
                         })
                     })
@@ -302,9 +302,8 @@
                     .from('events')
                     .update({
                         title: parsed.title,
-                        start_date: formatDateForDb(selectedDay.date),
-                        start_time: parsed.startTime,
-                        end_time: parsed.endTime,
+                        start_datetime_utc: startDatetimeUtc,
+                        end_datetime_utc: endDatetimeUtc,
                         is_all_day: parsed.isAllDay
                     })
                     .eq('id', editingEventId)
@@ -317,9 +316,8 @@
                     .insert({
                         calendar_id: calendarId,
                         title: parsed.title,
-                        start_date: formatDateForDb(selectedDay.date),
-                        start_time: parsed.startTime,
-                        end_time: parsed.endTime,
+                        start_datetime_utc: startDatetimeUtc,
+                        end_datetime_utc: endDatetimeUtc,
                         is_all_day: parsed.isAllDay
                     })
                 
@@ -434,11 +432,12 @@
         if (event.isAllDay) return ''
         
         let timeStr = ''
-        if (event.startTime) {
-            timeStr = formatTimeForDisplay(event.startTime)
-        }
-        if (event.endTime) {
-            timeStr += ` - ${formatTimeForDisplay(event.endTime)}`
+        const startTime = getLocalTimeFromUtc(event.startDatetimeUtc)
+        timeStr = formatTimeForDisplay(startTime)
+        
+        if (event.endDatetimeUtc) {
+            const endTime = getLocalTimeFromUtc(event.endDatetimeUtc)
+            timeStr += ` - ${formatTimeForDisplay(endTime)}`
         }
         return timeStr
     }
@@ -510,7 +509,7 @@
         }
         
         draggedEvent = eventObj
-        draggedFromDate = eventObj.startDate
+        draggedFromDate = getLocalDateFromUtc(eventObj.startDatetimeUtc)
         isDragging = true
         
         // Set drag effect
@@ -574,37 +573,49 @@
         const originalEvent = { ...draggedEvent }
         const originalDate = draggedFromDate
         
+        // Calculate the new UTC timestamp preserving the time
+        const localTime = getLocalTimeFromUtc(draggedEvent.startDatetimeUtc)
+        const newStartDatetimeUtc = toUtcTimestamp(day.date, localTime)
+        const endDatetimeUtc = draggedEvent.endDatetimeUtc ? (
+            draggedEvent.endDatetimeUtc
+                ? toUtcTimestamp(day.date, getLocalTimeFromUtc(draggedEvent.endDatetimeUtc))
+                : null
+        ) : null
+        
         // Optimistically update the local state immediately
-        updateEventInLocalState(draggedEvent.id, newDate)
+        updateEventInLocalState(draggedEvent.id, newStartDatetimeUtc, endDatetimeUtc)
         
         try {
             // Update the database in the background
-            await updateEventDate(draggedEvent.id, newDate)
+            await updateEventDate(draggedEvent.id, newStartDatetimeUtc, endDatetimeUtc)
             dispatch('eventMoved', { event: draggedEvent, newDate })
         } catch (error) {
             console.error('Error moving event:', error)
             // Revert the optimistic update if database update fails
-            if (originalDate) {
-                updateEventInLocalState(draggedEvent.id, originalDate)
+            if (originalEvent.startDatetimeUtc) {
+                updateEventInLocalState(draggedEvent.id, originalEvent.startDatetimeUtc, originalEvent.endDatetimeUtc)
             }
         }
         
         handleDragEnd(event)
     }
     
-    function updateEventInLocalState(eventId: string, newDate: string) {
+    function updateEventInLocalState(eventId: string, newStartDatetimeUtc: string, newEndDatetimeUtc?: string | null) {
         // Find and update the event in the events array
         const eventIndex = events.findIndex(e => e.id === eventId)
         if (eventIndex === -1) return
         
-        // Update the event's date
-        events[eventIndex].startDate = newDate
+        // Update the event's UTC timestamps
+        events[eventIndex].startDatetimeUtc = newStartDatetimeUtc
+        if (newEndDatetimeUtc !== undefined) {
+            events[eventIndex].endDatetimeUtc = newEndDatetimeUtc
+        }
         
         // Redistribute events to calendar days
         calendarGrid = calendarGrid.map(day => ({
             ...day,
             events: events
-                .filter(event => event.startDate === formatDateForDb(day.date))
+                .filter(event => isUtcTimestampOnLocalDate(event.startDatetimeUtc, day.date))
                 .sort((a, b) => {
                     // All-day events should appear first
                     if (a.isAllDay && !b.isAllDay) return -1
@@ -612,9 +623,7 @@
                     
                     // Among scheduled events, sort by start time
                     if (!a.isAllDay && !b.isAllDay) {
-                        if (a.startTime && b.startTime) {
-                            return a.startTime.localeCompare(b.startTime)
-                        }
+                        return a.startDatetimeUtc.localeCompare(b.startDatetimeUtc)
                     }
                     
                     return 0
@@ -622,8 +631,16 @@
         }))
     }
 
-    async function updateEventDate(eventId: string, newDate: string) {
+    async function updateEventDate(eventId: string, newStartDatetimeUtc: string, newEndDatetimeUtc?: string | null) {
         let error
+        
+        const updateData: any = {
+            start_datetime_utc: newStartDatetimeUtc
+        }
+        
+        if (newEndDatetimeUtc !== undefined) {
+            updateData.end_datetime_utc = newEndDatetimeUtc
+        }
         
         if (shareToken) {
             // Use shared calendar API
@@ -633,9 +650,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        start_date: newDate
-                    })
+                    body: JSON.stringify(updateData)
                 })
                 
                 if (!response.ok) {
@@ -649,7 +664,7 @@
             // Use regular Supabase client for authenticated users
             const { error: updateError } = await supabase
                 .from('events')
-                .update({ start_date: newDate })
+                .update(updateData)
                 .eq('id', eventId)
             
             error = updateError
@@ -753,7 +768,7 @@
                                                     }
                                                 }}
                                             >
-                                                {#if !event.isAllDay && event.startTime}
+                                                {#if !event.isAllDay}
                                                     <div class="event-time">{formatEventTime(event)}</div>
                                                 {/if}
                                                 <div 
@@ -885,7 +900,7 @@
                                     on:dragend={handleDragEnd}
                                 >
                                     <div class="agenda-event-content">
-                                        {#if !event.isAllDay && event.startTime}
+                                        {#if !event.isAllDay}
                                             <div class="agenda-event-time">{formatEventTime(event)}</div>
                                         {/if}
                                         <div 
