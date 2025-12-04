@@ -19,7 +19,7 @@
     
     // Daily inspiration
     let currentQuote = $state({ quote: '', author: '' })
-    let showQuote = $state(true)
+    let showQuote = $state(false)
     
     // Goals - loaded from API
     let goals = $state<Goal[]>([])
@@ -282,7 +282,7 @@
 <style>
     .ambient-coach {
         position: fixed;
-        top: 120px;
+        top: 102px;
         right: 20px;
         z-index: 100;
         display: flex;
@@ -296,12 +296,12 @@
     .inspiration-card,
     .nudge-card,
     .goals-progress-card {
-        background: #fef3e2;
+        background: rgba(254, 243, 226, 0.6);
         backdrop-filter: blur(10px);
-        border: 1px solid #fb923c;
+        border: 1px solid rgba(251, 146, 60, 0.3);
         border-radius: var(--radius-small-default);
-        padding: var(--space-4);
-        box-shadow: 0 4px 12px rgba(251, 146, 60, 0.1);
+        padding: var(--space-3);
+        box-shadow: 0 2px 6px rgba(251, 146, 60, 0.08);
         transition: all var(--transition-normal);
         font-family: var(--font-primary);
     }
@@ -309,8 +309,8 @@
     .inspiration-card:hover,
     .nudge-card:hover,
     .goals-progress-card:hover {
-        box-shadow: 0 8px 24px rgba(251, 146, 60, 0.15);
-        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(251, 146, 60, 0.12);
+        transform: translateY(-1px);
     }
     
     .card-header {
@@ -324,15 +324,17 @@
     
     .card-title {
         flex: 1;
-        font-size: 13px;
+        font-size: 11px;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        color: var(--gray-600);
+        font-weight: 500;
     }
     
     .inspiration-icon {
-        color: #ff9800;
-        font-size: 20px;
-        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        color: rgba(255, 152, 0, 0.7);
+        font-size: 16px;
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 16;
     }
     
     .nudge-icon {
@@ -369,20 +371,20 @@
     
     .inspiration-toggle {
         position: fixed;
-        top: 100px;
+        top: 102px;
         right: 20px;
-        background: #fef3e2;
+        background: rgba(254, 243, 226, 0.8);
         backdrop-filter: blur(10px);
-        border: 1px solid #fb923c;
+        border: 1px solid rgba(251, 146, 60, 0.3);
         border-radius: 50%;
-        width: 48px;
-        height: 48px;
+        width: 40px;
+        height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         transition: all var(--transition-normal);
-        box-shadow: 0 4px 12px rgba(251, 146, 60, 0.1);
+        box-shadow: 0 2px 6px rgba(251, 146, 60, 0.08);
         z-index: 100;
     }
     
@@ -392,9 +394,9 @@
     }
     
     .inspiration-toggle .material-symbols-outlined {
-        color: #ff9800;
-        font-size: 24px;
-        font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+        color: rgba(255, 152, 0, 0.7);
+        font-size: 20px;
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
     }
     
     .transformational-goal {
@@ -410,19 +412,20 @@
     }
     
     .goal-text {
-        margin: 0 0 var(--space-2) 0;
-        font-size: 16px;
+        margin: 0;
+        font-size: 13px;
         line-height: 1.5;
-        color: var(--gray-700);
-        font-weight: 500;
+        color: var(--gray-600);
+        font-weight: 400;
         font-style: italic;
     }
     
     .goal-placeholder {
-        margin: 0 0 var(--space-2) 0;
-        font-size: 16px;
+        margin: 0;
+        font-size: 13px;
         line-height: 1.5;
         color: var(--gray-400);
+        font-weight: 300;
         font-style: italic;
     }
     
