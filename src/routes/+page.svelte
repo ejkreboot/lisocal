@@ -3,7 +3,6 @@
     import CalendarMonth from '$lib/components/CalendarMonth.svelte'
     import TodoSidebar from '$lib/components/TodoSidebar.svelte'
     import ScratchpadSidebar from '$lib/components/ScratchpadSidebar.svelte'
-    import AmbientCoach from '$lib/components/AmbientCoach.svelte'
     import { user, session, loading, signOut } from '$lib/auth.js'
     import Header from '$lib/components/Header.svelte'
     import { onMount } from 'svelte'
@@ -266,13 +265,6 @@
                     month={currentMonth} 
                     {calendarId}
                     {canEdit}
-                    shareToken={data.sharedCalendar?.shareToken || null}
-                />
-                
-                <!-- Ambient Coach - shown only on larger screens with calendar -->
-                <AmbientCoach 
-                    visible={!!calendarId} 
-                    calendarId={calendarId || ''}
                     shareToken={data.sharedCalendar?.shareToken || null}
                 />
             {:else if !$user}
