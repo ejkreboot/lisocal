@@ -1,4 +1,5 @@
 <script lang="ts">
+	import '@fontsource/monaspace-xenon/latin.css';
 	let { children } = $props();
 </script>
 

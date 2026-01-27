@@ -6,6 +6,7 @@
     import NotesModal from '$lib/components/NotesModal.svelte'
     import PomodoroTimer from '$lib/components/PomodoroTimer.svelte'
     import HabitTrackerModal from '$lib/components/HabitTrackerModal.svelte'
+    import WritingModal from '$lib/components/writing/WritingModal.svelte'
 
     let { data, calendarName, calendarId } = $props();
 
@@ -18,6 +19,7 @@
     let showExternalCalendarModal = $state(false)
     let showPomodoroTimer = $state(false)
     let showHabitTracker = $state(false)
+    let showWritingModal = $state(false)
 
     function startEditingTitle() {
         if (!$user || !calendarName) return
@@ -196,6 +198,13 @@
                         >
                             <span class="material-symbols-outlined" style="font-size: 20px;">self_improvement</span>
                         </button>
+                        <button 
+                            onclick={() => showWritingModal = true} 
+                            class="writing-button icon-button"
+                            title="Writing"
+                        >
+                            <span class="material-symbols-outlined" style="font-size: 20px;">edit_note</span>
+                        </button>
                         {#if canEdit}
                             <button 
                                 onclick={() => showExternalCalendarModal = true} 
@@ -271,6 +280,13 @@
                                 <span class="material-symbols-outlined">self_improvement</span>
                                 Habit Tracker
                             </button>
+                            <button 
+                                onclick={() => { showWritingModal = true; closeMobileMenu(); }} 
+                                class="mobile-menu-item"
+                            >
+                                <span class="material-symbols-outlined">edit_note</span>
+                                Writing
+                            </button>
                             {#if canEdit}
                                 <button 
                                     onclick={() => { showExternalCalendarModal = true; closeMobileMenu(); }} 
@@ -343,6 +359,13 @@
     shareToken={data?.sharedCalendar?.shareToken || null}
     on:close={() => showHabitTracker = false}
 />
+
+{#if $user}
+    <WritingModal 
+        bind:isOpen={showWritingModal}
+        userId={$user.id}
+    />
+{/if}
 
 <style>
             /* Typography overrides */

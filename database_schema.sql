@@ -583,3 +583,21 @@ CREATE TRIGGER trigger_update_goal_progress
     AFTER INSERT OR UPDATE ON public.goal_progress
     FOR EACH ROW 
     EXECUTE FUNCTION update_goal_progress_on_entry();
+
+
+-- Writing bucket
+insert into storage.buckets (id, name, public)
+    values ('lisocal_write', 'lisocal_write', false)
+    on conflict (id) do nothing;
+
+create policy "Users can manage their own writings"
+on storage.objects
+for all
+using (
+  bucket_id = 'lisocal_write' 
+  and auth.uid()::text = (storage.foldername(name))[1]
+)
+with check (
+  bucket_id = 'lisocal_write' 
+  and auth.uid()::text = (storage.foldername(name))[1]
+);
