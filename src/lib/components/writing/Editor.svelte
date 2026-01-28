@@ -101,36 +101,62 @@
 		parts[parts.length - 1] = lastPart.replace(/\.md$/, '');
 		return parts.join('/');
 	})();
+
+	// Break down path into breadcrumb parts for display
+	$: pathParts = filename.split('/');
+	$: folderPath = pathParts.slice(0, -1);
+	$: fileName = pathParts[pathParts.length - 1].replace(/\.md$/, '');
 </script>
 
 <div class="editor-container">
 	<div class="editor-header">
 		<div class="filename-section">
 			{#if editingFilename}
-				<input
-					bind:this={filenameInput}
-					type="text"
-					class="filename-input"
-					value={displayFilename}
-					on:blur={finishEditingFilename}
-					on:keydown={handleFilenameKeydown}
-				/>
+				<div class="breadcrumb-edit">
+					<svg class="edit-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M4 2H9L12 5V13C12 13.5523 11.5523 14 11 14H4C3.44772 14 3 13.5523 3 13V3C3 2.44772 3.44772 2 4 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+						<path d="M9 2V5H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+					<input
+						bind:this={filenameInput}
+						type="text"
+						class="filename-input"
+						value={displayFilename}
+						on:blur={finishEditingFilename}
+						on:keydown={handleFilenameKeydown}
+					/>
+				</div>
 			{:else}
-				<button class="filename-display" on:click={startEditingFilename}>
-					{displayFilename}
+				<button class="breadcrumb-container" on:click={startEditingFilename} title="Click to rename">
+					{#if folderPath.length > 0}
+						<svg class="folder-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M2 4C2 3.44772 2.44772 3 3 3H6L7 5H13C13.5523 5 14 5.44772 14 6V12C14 12.5523 13.5523 13 13 13H3C2.44772 13 2 12.5523 2 12V4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+						</svg>
+						<span class="folder-path">{folderPath.join('/')}</span>
+						<svg class="separator" width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+							<path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					{/if}
+					<svg class="file-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M4 2H9L12 5V13C12 13.5523 11.5523 14 11 14H4C3.44772 14 3 13.5523 3 13V3C3 2.44772 3.44772 2 4 2Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+						<path d="M9 2V5H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+					<span class="file-name">{fileName}</span>
 				</button>
 			{/if}
 		</div>
 	</div>
 
-	<textarea
-		bind:this={textareaElement}
-		bind:value={content}
-		on:input={handleInput}
-		class="editor-textarea"
-		placeholder="Start writing..."
-		spellcheck="true"
-	></textarea>
+	<div class="paper-wrapper">
+		<textarea
+			bind:this={textareaElement}
+			bind:value={content}
+			on:input={handleInput}
+			class="editor-textarea"
+			placeholder="Start writing..."
+			spellcheck="true"
+		></textarea>
+	</div>
 
 	<div class="save-indicator floating">
 		{#if saveStatus === 'saving'}
@@ -148,46 +174,99 @@
 		display: flex;
 		flex-direction: column;
 		height: 100%;
-		background: #fafafa;
+		background: #f5f5f5;
 	}
 
 	.editor-header {
 		display: flex;
 		justify-content: flex-start;
 		align-items: center;
-		padding: 1.5rem 2rem 1rem 2rem;
+		padding: 0.75rem 2rem 0.75rem 2rem;
 		border-bottom: 1px solid #ddd;
 	}
 
 	.filename-section {
 		flex: 1;
+		display: flex;
+		align-items: center;
 	}
 
-	.filename-display {
-		background: none;
-		border: none;
-		font-size: 1.125rem;
+	.breadcrumb-container {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		background: rgba(0, 0, 0, 0.02);
+		border: 1px solid rgba(0, 0, 0, 0.06);
+		font-size: 0.8125rem;
 		font-weight: 500;
-		color: #333;
+		color: #1a1a1a;
 		cursor: pointer;
-		padding: 0.375rem 0.625rem;
+		padding: 0.5rem 0.75rem;
 		border-radius: 0;
-		transition: background 0.2s;
+		transition: all 0.15s ease;
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 	}
 
-	.filename-display:hover {
-		background: #e5e5e5;
+	.breadcrumb-container:hover {
+		background: rgba(0, 0, 0, 0.04);
+		border-color: rgba(0, 0, 0, 0.12);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+	}
+
+	.folder-icon,
+	.file-icon {
+		color: #666;
+		flex-shrink: 0;
+	}
+
+	.folder-icon {
+		color: #8b7355;
+	}
+
+	.file-icon {
+		color: #3b82f6;
+	}
+
+	.folder-path {
+		color: #666;
+		font-size: 0.8125rem;
+	}
+
+	.separator {
+		color: #999;
+		flex-shrink: 0;
+	}
+
+	.file-name {
+		color: #1a1a1a;
+		font-weight: 600;
+	}
+
+	.breadcrumb-edit {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		background: white;
+		border: 2px solid #3b82f6;
+		padding: 0.5rem 0.75rem;
+		border-radius: 0;
+		box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+	}
+
+	.edit-icon {
+		color: #3b82f6;
+		flex-shrink: 0;
 	}
 
 	.filename-input {
-		font-size: 1.125rem;
+		font-size: 0.8125rem;
 		font-weight: 500;
-		color: #333;
-		padding: 0.375rem 0.625rem;
-		border: 1px solid #666;
-		border-radius: 0;
+		color: #1a1a1a;
+		padding: 0;
+		border: none;
 		outline: none;
 		min-width: 200px;
+		background: transparent;
 	}
 
 	.save-indicator {
@@ -219,20 +298,30 @@
 		color: #ef4444;
 	}
 
+	.paper-wrapper {
+		flex: 1;
+		display: flex;
+		justify-content: center;
+		padding: 0 2rem 0 2rem;
+		overflow-y: auto;
+	}
+
 	.editor-textarea {
 		flex: 1;
 		width: 100%;
-		max-width: 65ch;
-		margin: 0 auto;
-		padding: 2rem;
+		max-width: calc(75ch + 20rem);
+		padding: 3rem 10rem;
 		border: none;
 		outline: none;
-		background: transparent;
+		background: white;
 		font-family: 'Monaspace Xenon', 'Monaco', 'Courier New', monospace;
 		font-size: 1rem;
 		line-height: 2;
 		color: #1a1a1a;
 		resize: none;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+		height: fit-content;
+		min-height: 100%;
 	}
 
 	.editor-textarea::placeholder {

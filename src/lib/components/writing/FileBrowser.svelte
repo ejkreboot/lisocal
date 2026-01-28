@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { FileMetadata, DirectoryNode } from './storage';
-	import { deleteFile, buildDirectoryTree } from './storage';
+	import { deleteFile, deleteDirectory, buildDirectoryTree } from './storage';
 	import TreeNode from './TreeNode.svelte';
 
 	export let files: FileMetadata[];
@@ -9,8 +9,10 @@
 	export let onNewFile: () => void;
 	export let onNewFolder: () => void;
 	export let userId: string;
+	export let onRefreshFiles: () => void;
 
 	let deletingFile: string | null = null;
+	let deletingFolder: string | null = null;
 	let expandedDirs = new Set<string>();
 
 	// Build directory tree from files
@@ -40,6 +42,11 @@
 		deletingFile = file.path;
 	}
 
+	function handleDeleteFolder(folderPath: string, event: Event) {
+		event.stopPropagation();
+		deletingFolder = folderPath;
+	}
+
 	async function confirmDelete(path: string) {
 		const success = await deleteFile(path);
 		
@@ -51,8 +58,20 @@
 		deletingFile = null;
 	}
 
+	async function confirmDeleteFolder(folderPath: string) {
+		const success = await deleteDirectory(userId, folderPath);
+		
+		if (success) {
+			// Refresh the entire file list
+			onRefreshFiles();
+		}
+		
+		deletingFolder = null;
+	}
+
 	function cancelDelete() {
 		deletingFile = null;
+		deletingFolder = null;
 	}
 </script>
 
@@ -90,8 +109,9 @@
 					depth={0}
 					{currentFile}
 					{expandedDirs}
+					{userId}
 					onFileClick={handleFileClick}
-					onDelete={handleDelete}
+					onDelete={handleDelete}					onDeleteFolder={handleDeleteFolder}				onMoveComplete={onRefreshFiles}
 				/>
 			{/each}
 		{/if}
@@ -122,6 +142,38 @@
 				<button
 					class="confirm-delete-btn"
 					on:click={() => deletingFile && confirmDelete(deletingFile)}
+				>
+					Delete
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if deletingFolder}
+	<div 
+		class="delete-modal-overlay" 
+		on:click={cancelDelete}
+		on:keydown={(e) => e.key === 'Escape' && cancelDelete()}
+		role="button"
+		tabindex="0"
+	>
+		<div 
+			class="delete-modal" 
+			on:click|stopPropagation
+			on:keydown|stopPropagation
+			role="dialog"
+			aria-modal="true"
+			tabindex="-1"
+		>
+			<h3>Delete this folder?</h3>
+			<p>{deletingFolder}</p>
+			<p class="delete-warning">This action cannot be undone.</p>
+			<div class="delete-actions">
+				<button class="cancel-btn" on:click={cancelDelete}>Cancel</button>
+				<button
+					class="confirm-delete-btn"
+					on:click={() => deletingFolder && confirmDeleteFolder(deletingFolder)}
 				>
 					Delete
 				</button>

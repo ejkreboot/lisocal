@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { DirectoryNode, FileMetadata } from './storage';
+	import { moveFile, isDirectoryEmpty } from './storage';
 
 	export let node: DirectoryNode;
 	export let depth: number = 0;
@@ -7,12 +8,90 @@
 	export let expandedDirs: Set<string>;
 	export let onFileClick: (node: DirectoryNode) => void;
 	export let onDelete: (file: FileMetadata, event: Event) => void;
+	export let onDeleteFolder: (path: string, event: Event) => void;
+	export let userId: string;
+	export let onMoveComplete: () => void;
 
 	$: isExpanded = expandedDirs.has(node.path);
 	$: isActive = !node.isDirectory && node.file && currentFile === node.file.path;
 
+	let isDragOver = false;
+	let isDragging = false;
+	let isFolderEmpty = false;
+	let checkingEmpty = false;
+
+	// Check if folder is empty when hovering over delete button
+	async function checkFolderEmpty() {
+		if (!node.isDirectory || checkingEmpty) return;
+		checkingEmpty = true;
+		isFolderEmpty = await isDirectoryEmpty(userId, node.path);
+		checkingEmpty = false;
+	}
+
 	function getDisplayName(name: string): string {
 		return name.replace(/\.md$/, '');
+	}
+
+	// Drag handlers for files
+	function handleDragStart(event: DragEvent) {
+		if (node.isDirectory || !node.file) return;
+		
+		isDragging = true;
+		if (event.dataTransfer) {
+			event.dataTransfer.effectAllowed = 'move';
+			event.dataTransfer.setData('text/plain', node.file.path);
+		}
+	}
+
+	function handleDragEnd() {
+		isDragging = false;
+	}
+
+	// Drop handlers for folders
+	function handleDragOver(event: DragEvent) {
+		if (!node.isDirectory) return;
+		
+		event.preventDefault();
+		if (event.dataTransfer) {
+			event.dataTransfer.dropEffect = 'move';
+		}
+		isDragOver = true;
+	}
+
+	function handleDragLeave() {
+		isDragOver = false;
+	}
+
+	async function handleDrop(event: DragEvent) {
+		if (!node.isDirectory) return;
+		
+		event.preventDefault();
+		isDragOver = false;
+
+		const draggedFilePath = event.dataTransfer?.getData('text/plain');
+		if (!draggedFilePath) return;
+
+		// Get the relative path (without userId)
+		const relativePath = draggedFilePath.replace(`${userId}/`, '');
+		const filename = relativePath.split('/').pop();
+		
+		// Don't drop into itself
+		if (relativePath.startsWith(node.path + '/')) return;
+
+		// Construct new path
+		const newRelativePath = `${node.path}/${filename}`;
+		const newFullPath = `${userId}/${newRelativePath}`;
+
+		// Don't move if it's already there
+		if (draggedFilePath === newFullPath) return;
+
+		// Perform the move
+		const success = await moveFile(draggedFilePath, newFullPath);
+		
+		if (success) {
+			// Trigger refresh
+			onMoveComplete();
+		}
 	}
 </script>
 
@@ -21,10 +100,18 @@
 		class="file-item"
 		class:active={isActive}
 		class:directory={node.isDirectory}
+		class:drag-over={isDragOver}
+		class:dragging={isDragging}
 		on:click={() => onFileClick(node)}
 		role="button"
 		tabindex="0"
 		on:keydown={(e) => e.key === 'Enter' && onFileClick(node)}
+		draggable={!node.isDirectory}
+		on:dragstart={handleDragStart}
+		on:dragend={handleDragEnd}
+		on:dragover={handleDragOver}
+		on:dragleave={handleDragLeave}
+		on:drop={handleDrop}
 	>
 		{#if node.isDirectory}
 			<svg class="chevron" class:expanded={isExpanded} width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -50,6 +137,19 @@
 					<path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6 7V11M10 7V11M4 4H12V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 				</svg>
 			</button>
+		{:else if node.isDirectory}
+			<button
+				class="delete-btn folder-delete"
+				class:disabled={!isFolderEmpty && checkingEmpty === false}
+				on:mouseenter={checkFolderEmpty}
+				on:click={(e) => isFolderEmpty && onDeleteFolder(node.path, e)}
+				title={isFolderEmpty ? 'Delete folder' : 'Only empty folders can be deleted'}
+				disabled={!isFolderEmpty && checkingEmpty === false}
+			>
+				<svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6 7V11M10 7V11M4 4H12V13C12 13.5523 11.5523 14 11 14H5C4.44772 14 4 13.5523 4 13V4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
+			</button>
 		{/if}
 	</div>
 
@@ -62,6 +162,9 @@
 				{expandedDirs}
 				{onFileClick}
 				{onDelete}
+				{onDeleteFolder}
+				{userId}
+				{onMoveComplete}
 			/>
 		{/each}
 	{/if}
@@ -145,5 +248,36 @@
 	.delete-btn:hover {
 		background: rgba(0, 0, 0, 0.1);
 		color: #333;
+	}
+
+	.delete-btn.disabled,
+	.delete-btn:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+
+	.delete-btn.disabled:hover,
+	.delete-btn:disabled:hover {
+		background: none;
+		color: #999;
+	}
+
+	.file-item.dragging {
+		opacity: 0.5;
+		cursor: move;
+	}
+
+	.file-item.drag-over {
+		background: rgba(59, 130, 246, 0.1);
+		border: 2px dashed rgba(59, 130, 246, 0.5);
+		margin: -2px;
+	}
+
+	.file-item:not(.directory) {
+		cursor: grab;
+	}
+
+	.file-item:not(.directory):active {
+		cursor: grabbing;
 	}
 </style>

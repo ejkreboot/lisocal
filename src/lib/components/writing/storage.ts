@@ -150,6 +150,47 @@ export async function deleteFile(path: string): Promise<boolean> {
 }
 
 /**
+ * Check if a directory is empty
+ */
+export async function isDirectoryEmpty(userId: string, dirPath: string): Promise<boolean> {
+	const fullPath = `${userId}/${dirPath}`;
+	const { data, error } = await supabase.storage.from(BUCKET_NAME).list(fullPath, {
+		limit: 10
+	});
+
+	if (error) {
+		console.error('Error checking directory:', error);
+		return false;
+	}
+
+	// Empty if no files or only .keep file exists
+	return !data || data.length === 0 || (data.length === 1 && data[0].name === '.keep');
+}
+
+/**
+ * Delete an empty directory (removes the .keep file)
+ */
+export async function deleteDirectory(userId: string, dirPath: string): Promise<boolean> {
+	// Check if directory is empty first
+	const isEmpty = await isDirectoryEmpty(userId, dirPath);
+	if (!isEmpty) {
+		console.error('Cannot delete non-empty directory');
+		return false;
+	}
+
+	// Delete the .keep file
+	const keepPath = `${userId}/${dirPath}/.keep`;
+	const { error } = await supabase.storage.from(BUCKET_NAME).remove([keepPath]);
+
+	if (error) {
+		console.error('Error deleting directory:', error);
+		return false;
+	}
+
+	return true;
+}
+
+/**
  * Create a directory by uploading a placeholder file
  */
 export async function createDirectory(userId: string, dirPath: string): Promise<boolean> {

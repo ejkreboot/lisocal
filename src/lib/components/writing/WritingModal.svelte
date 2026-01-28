@@ -197,6 +197,7 @@
 						onFileSelect={openFile}
 						onNewFile={createNewFile}
 						onNewFolder={startFolderCreation}
+						onRefreshFiles={loadFiles}
 					/>
 				</div>
 
@@ -304,10 +305,10 @@
 
 	.close-btn {
 		position: absolute;
-		top: 1.25rem;
+		top: 0.7rem;
 		right: 1.25rem;
 		z-index: 10;
-		padding: 0.5rem;
+		padding: 0.2rem  0.2rem  0rem  0.2rem;
 		background: white;
 		border: 1px solid #ddd;
 		border-radius: 0;
@@ -326,7 +327,7 @@
 		top: 0.75rem;
 		right: 0.75rem;
 		z-index: 10;
-		padding: 0.375rem;
+		padding: 0.3rem  0.3rem  0.1rem  0.3rem;
 		background: white;
 		border: 1px solid #ddd;
 		border-radius: 0;
@@ -342,10 +343,10 @@
 
 	.show-sidebar-btn {
 		position: absolute;
-		top: 1.25rem;
-		left: 1.25rem;
+		top: 0.75rem;
+		left: 0.5rem;
 		z-index: 10;
-		padding: 0.5rem;
+		padding: 0.3rem  0.3rem  0.1rem  0.3rem;
 		background: white;
 		border: 1px solid #ddd;
 		border-radius: 0;
