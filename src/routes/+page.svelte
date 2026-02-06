@@ -336,8 +336,9 @@
     
     .page-wrapper {
         display: flex;
-        min-height: calc(100vh - 60px);
+        flex: 1;
         background: transparent;
+        overflow: hidden;
     }
     
     .sidebar-container {
@@ -431,6 +432,7 @@
         display: flex;
         flex-direction: column;
         min-width: 0;
+        overflow: hidden;
     }
     
     .calendar-navigation {
@@ -528,6 +530,8 @@
         margin: 0 auto;
         width: 100%;
         box-sizing: border-box;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
     
 
@@ -675,6 +679,7 @@
         
         .calendar-main {
             padding: var(--space-4);
+            padding-top: 40px;
         }
         
         .month-year {

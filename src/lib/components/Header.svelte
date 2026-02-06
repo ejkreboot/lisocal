@@ -384,6 +384,8 @@
         background: var(--white);
         box-shadow: var(--shadow-sm);
         min-width: 100%;
+        position: relative;
+        z-index: 20;
     }
 
     .header-center {
@@ -687,6 +689,7 @@
             justify-content: space-between;
             padding: var(--space-3) var(--space-4);
             gap: var(--space-2);
+            box-shadow: 0 6px 8px -10px rgba(0, 0, 0, 0.28), 0 3px 8px -6px rgba(0, 0, 0, 0.18) !important;
         }
         
         .header-left {

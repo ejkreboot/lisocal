@@ -20,6 +20,7 @@
     let isSaving = false
     let editingEventId: string | null = null
     let isOpening = false
+    let isLoading = true
     
     // Drag and drop state
     let draggedEvent: CalendarEvent | null = null
@@ -47,6 +48,16 @@
     
     onMount(() => {
         loadEvents()
+        
+        // Auto-scroll to today on mobile devices
+        if (browser && window.innerWidth <= 768) {
+            setTimeout(() => {
+                const todayElement = document.querySelector('.agenda-day.today')
+                if (todayElement) {
+                    todayElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }
+            }, 100)
+        }
         
         // Add global click handler to close editors when clicking outside
         const handleGlobalClick = (event: Event) => {
@@ -78,6 +89,9 @@
     
     async function loadEvents() {
         if (!calendarId) return
+        
+        isLoading = true
+        const loadStartTime = Date.now()
         
         // Auto-sync external calendars if user is authenticated (not via share link)
         if (!shareToken && canEdit) {
@@ -164,6 +178,15 @@
                     return 0
                 })
         }))
+        
+        // Ensure minimum display time of 2 seconds for splash screen
+        const loadDuration = Date.now() - loadStartTime
+        const minDisplayTime = 2000
+        if (loadDuration < minDisplayTime) {
+            await new Promise(resolve => setTimeout(resolve, minDisplayTime - loadDuration))
+        }
+        
+        isLoading = false
     }
     
     async function startEditing(row: number, col: number) {
@@ -676,6 +699,21 @@
     }
 </script>
 
+<!-- Mobile Splash Screen -->
+{#if isLoading && browser && window.innerWidth <= 768}
+    <div class="mobile-splash">
+        <div class="splash-content">
+            <img src="/logo_250.png" alt="lisocal logo" class="splash-logo" />
+            <h1 class="splash-title">lisocal</h1>
+            <div class="splash-spinner">
+                <div class="spinner-dot"></div>
+                <div class="spinner-dot"></div>
+                <div class="spinner-dot"></div>
+            </div>
+        </div>
+    </div>
+{/if}
+
 <!-- Desktop View -->
 <div class="calendar-grid desktop-view" role="grid" aria-label="Calendar grid for {new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}">
     <!-- Header with day names -->
@@ -820,7 +858,7 @@
 </div>
 
 <!-- Mobile View - Agenda/List Layout -->
-<div class="calendar-agenda mobile-view" role="list" aria-label="Calendar events for {new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}">
+<div class="calendar-agenda mobile-view" class:loading={isLoading} role="list" aria-label="Calendar events for {new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}">
     {#each calendarGrid.filter(day => day.isCurrentMonth) as day, index}
         {@const dayEvents = day.events}
         {@const hasEvents = dayEvents.length > 0}
@@ -977,6 +1015,108 @@
 <style>
     /* Component-specific calendar styles - most styles now in global.css */
   
+    /* Mobile Splash Screen */
+    .mobile-splash {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        animation: fadeIn 0.3s ease;
+    }
+    
+    .splash-content {
+        text-align: center;
+        animation: slideUp 0.5s ease;
+    }
+    
+    .splash-logo {
+        width: 120px;
+        height: 120px;
+        margin-bottom: var(--space-4);
+        animation: logoFloat 2s ease-in-out infinite;
+    }
+    
+    .splash-title {
+        font-family: var(--font-primary);
+        font-size: 36px;
+        font-weight: 300;
+        color: var(--dark-text);
+        margin: 0 0 var(--space-6) 0;
+        letter-spacing: -0.02em;
+    }
+    
+    .splash-spinner {
+        display: flex;
+        gap: var(--space-2);
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .spinner-dot {
+        width: 12px;
+        height: 12px;
+        background: var(--primary-color);
+        border-radius: 50%;
+        animation: bounce 1.4s ease-in-out infinite;
+    }
+    
+    .spinner-dot:nth-child(1) {
+        animation-delay: -0.32s;
+    }
+    
+    .spinner-dot:nth-child(2) {
+        animation-delay: -0.16s;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes logoFloat {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+    
+    @keyframes bounce {
+        0%, 80%, 100% {
+            transform: scale(0);
+            opacity: 0.5;
+        }
+        40% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    .calendar-agenda.loading {
+        opacity: 0;
+    }
 
     /* Calendar grid specific layout */
     .calendar-grid {
@@ -1281,7 +1421,7 @@
     
     .agenda-add-event {
         background: none;
-        border: 2px dashed var(--gray-1000);
+        border: 1px dashed var(--gray-400);
         color: var(--gray-1000);
         border-radius: var(--radius-small-default);
         padding: var(--space-2) var(--space-3);
@@ -1353,6 +1493,7 @@
             width: 100%;
             max-width: 100%;
             overflow-x: hidden;
+            margin-top: var(--space-4);
         }
         
         .agenda-content {

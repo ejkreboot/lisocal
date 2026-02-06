@@ -10,5 +10,15 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
 </svelte:head>
 
+<div class="app-root">
+	{@render children?.()}
+</div>
 
-{@render children?.()}
+<style>
+	.app-root {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+		min-height: 0;
+	}
+</style>
