@@ -58,6 +58,8 @@ CREATE TABLE IF NOT EXISTS public.todos (
     priority_date DATE,
     daily_priority BOOLEAN,
     goal_id UUID,
+    stage TEXT DEFAULT 'Ready' CHECK (stage IN ('Contemplation', 'Ready', 'In Progress', 'Done')),
+    project TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -166,6 +168,8 @@ CREATE INDEX IF NOT EXISTS idx_shared_links_token ON public.shared_links(share_t
 CREATE INDEX IF NOT EXISTS idx_shared_links_calendar_id ON public.shared_links(calendar_id);
 CREATE INDEX IF NOT EXISTS idx_todos_calendar_id ON public.todos(calendar_id);
 CREATE INDEX IF NOT EXISTS idx_todos_sort_index ON public.todos(calendar_id, completed, sort_index);
+CREATE INDEX IF NOT EXISTS idx_todos_stage ON public.todos(calendar_id, stage);
+CREATE INDEX IF NOT EXISTS idx_todos_project ON public.todos(calendar_id, project) WHERE project IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_notes_calendar_id ON public.notes(calendar_id);
 CREATE INDEX IF NOT EXISTS idx_notes_sort_index ON public.notes(calendar_id, sort_index);
 CREATE INDEX IF NOT EXISTS idx_habits_calendar_id ON public.habits(calendar_id);

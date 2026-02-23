@@ -72,13 +72,18 @@
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
+		if (!isOpen) return
+
+		const target = event.target as HTMLElement | null
+		const isTypingTarget = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+
 		if (event.key === 'Escape') {
 			if (showSettings) {
 				showSettings = false
 			} else {
 				closeTimer()
 			}
-		} else if (event.key === ' ' || event.code === 'Space') {
+		} else if ((event.key === ' ' || event.code === 'Space') && !isTypingTarget) {
 			event.preventDefault()
 			if (isRunning) {
 				pauseTimer()

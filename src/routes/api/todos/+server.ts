@@ -99,7 +99,7 @@ export const POST: RequestHandler = async ({ request, url }) => {
     try {
         const shareToken = url.searchParams.get('shareToken');
         const body = await request.json();
-        const { calendarId, text, goalId, priorityLevel, dailyPriority, priorityDate } = body;
+        const { calendarId, text, goalId, priorityLevel, dailyPriority, priorityDate, stage, project } = body;
 
         
         if (!calendarId || !text?.trim()) {
@@ -144,7 +144,9 @@ export const POST: RequestHandler = async ({ request, url }) => {
                     goal_id: goalId || null,
                     priority_level: priorityLevel || 0,
                     daily_priority: dailyPriority || false,
-                    priority_date: priorityDate || null
+                    priority_date: priorityDate || null,
+                    stage: stage || 'Ready',
+                    project: project || null
                 })
                 .select(`
                     *,
@@ -199,7 +201,9 @@ export const POST: RequestHandler = async ({ request, url }) => {
                     goal_id: goalId || null,
                     priority_level: priorityLevel || 0,
                     daily_priority: dailyPriority || false,
-                    priority_date: priorityDate || null
+                    priority_date: priorityDate || null,
+                    stage: stage || 'Ready',
+                    project: project || null
                 })
                 .select(`
                     *,
@@ -320,7 +324,7 @@ export const PUT: RequestHandler = async ({ request, url }) => {
                 return json({ error: 'Edit permission required' }, { status: 403 });
             }
 
-            // Regular update (text, completion status, goal, priority)
+            // Regular update (text, completion status, goal, priority, stage, project)
             const updateData: any = {};
             if (body.text !== undefined) updateData.text = body.text.trim();
             if (body.completed !== undefined) updateData.completed = body.completed;
@@ -328,6 +332,8 @@ export const PUT: RequestHandler = async ({ request, url }) => {
             if (body.priorityLevel !== undefined) updateData.priority_level = body.priorityLevel || 0;
             if (body.dailyPriority !== undefined) updateData.daily_priority = body.dailyPriority || false;
             if (body.priorityDate !== undefined) updateData.priority_date = body.priorityDate || null;
+            if (body.stage !== undefined) updateData.stage = body.stage;
+            if (body.project !== undefined) updateData.project = body.project || null;
 
             const { data, error } = await supabaseAdmin
                 .from('todos')
@@ -364,7 +370,7 @@ export const PUT: RequestHandler = async ({ request, url }) => {
                 return json({ error: 'Invalid token' }, { status: 401 });
             }
 
-            // Regular update (text, completion status, goal, priority)
+            // Regular update (text, completion status, goal, priority, stage, project)
             const updateData: any = {};
             if (body.text !== undefined) updateData.text = body.text.trim();
             if (body.completed !== undefined) updateData.completed = body.completed;
@@ -372,6 +378,8 @@ export const PUT: RequestHandler = async ({ request, url }) => {
             if (body.priorityLevel !== undefined) updateData.priority_level = body.priorityLevel || 0;
             if (body.dailyPriority !== undefined) updateData.daily_priority = body.dailyPriority || false;
             if (body.priorityDate !== undefined) updateData.priority_date = body.priorityDate || null;
+            if (body.stage !== undefined) updateData.stage = body.stage;
+            if (body.project !== undefined) updateData.project = body.project || null;
 
             const { data, error } = await supabaseAdmin
                 .from('todos')

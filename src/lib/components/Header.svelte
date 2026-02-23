@@ -7,6 +7,7 @@
     import PomodoroTimer from '$lib/components/PomodoroTimer.svelte'
     import HabitTrackerModal from '$lib/components/HabitTrackerModal.svelte'
     import WritingModal from '$lib/components/writing/WritingModal.svelte'
+    import KanbanBoard from '$lib/components/KanbanBoard.svelte'
 
     let { data, calendarName, calendarId } = $props();
 
@@ -20,6 +21,7 @@
     let showPomodoroTimer = $state(false)
     let showHabitTracker = $state(false)
     let showWritingModal = $state(false)
+    let showKanbanBoard = $state(false)
 
     function startEditingTitle() {
         if (!$user || !calendarName) return
@@ -178,6 +180,13 @@
                             <span class="material-symbols-outlined" style="font-size: 20px;">task_alt</span>
                         </button>
                         <button 
+                            onclick={() => showKanbanBoard = true} 
+                            class="kanban-button icon-button"
+                            title="Project Board"
+                        >
+                            <span class="material-symbols-outlined" style="font-size: 20px;">view_kanban</span>
+                        </button>
+                        <button 
                             onclick={() => showNotesModal = true} 
                             class="notes-button icon-button"
                             title="Scratchpad"
@@ -252,6 +261,13 @@
                             role="menu"
                             tabindex="-1"
                         >
+                            <button 
+                                onclick={() => { showKanbanBoard = true; closeMobileMenu(); }} 
+                                class="mobile-menu-item"
+                            >
+                                <span class="material-symbols-outlined">view_kanban</span>
+                                Project Board
+                            </button>
                             <button 
                                 onclick={() => { showTodoModal = true; closeMobileMenu(); }} 
                                 class="mobile-menu-item"
@@ -366,6 +382,14 @@
         userId={$user.id}
     />
 {/if}
+
+<KanbanBoard 
+    bind:isOpen={showKanbanBoard}
+    {canEdit}
+    calendarId={calendarId || ''}
+    shareToken={data?.sharedCalendar?.shareToken || null}
+    on:close={() => showKanbanBoard = false}
+/>
 
 <style>
             /* Typography overrides */

@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { supabase } from '$lib/supabase.js';
+	import { onMount } from 'svelte';
 	import { scale } from 'svelte/transition';
 	import { quintOut, quintIn } from 'svelte/easing';
+
+	const TODOS_UPDATED_EVENT = 'todos-updated';
 
 	// Custom fadeFlow transition to match your signature animation
 	function fadeFlowIn(node: HTMLElement, { duration = 250 } = {}) {
@@ -52,6 +55,15 @@
 	let loading = $state(false);
 	let removingTodoIds: Set<string> = $state(new Set());
 
+	function broadcastTodosUpdated() {
+		if (typeof window === 'undefined' || !calendarId) return;
+		window.dispatchEvent(
+			new CustomEvent(TODOS_UPDATED_EVENT, {
+				detail: { calendarId, source: 'todo-sidebar' }
+			})
+		);
+	}
+
 	// Expose function to create a todo and add it to Best Steps
 	export async function createTodoInBestSteps() {
 		if (!canEdit || !calendarId) return;
@@ -86,6 +98,7 @@
 			setTimeout(() => {
 				startEdit(data.todo.id, data.todo.text);
 			}, 0);
+			broadcastTodosUpdated();
 		} catch (error) {
 			console.error('Error creating todo in best steps:', error);
 		}
@@ -147,6 +160,17 @@
 			loading = false;
 		}
 	}
+
+	onMount(() => {
+		const handler = (event: Event) => {
+			const detail = (event as CustomEvent<{ calendarId: string; source?: string }>).detail;
+			if (!detail || detail.calendarId !== calendarId || detail.source === 'todo-sidebar') return;
+			loadTodos();
+		};
+
+		window.addEventListener(TODOS_UPDATED_EVENT, handler as EventListener);
+		return () => window.removeEventListener(TODOS_UPDATED_EVENT, handler as EventListener);
+	});
 
 
 
@@ -226,6 +250,7 @@
 						? { ...t, daily_priority: true, priority_date: today }
 						: t
 				);
+				broadcastTodosUpdated();
 			}
 		} catch (error) {
 			console.error('Error adding to best steps:', error);
@@ -257,6 +282,7 @@
 						? { ...t, daily_priority: false, priority_date: null }
 						: t
 				);
+				broadcastTodosUpdated();
 			}
 		} catch (error) {
 			console.error('Error removing from best steps:', error);
@@ -291,6 +317,7 @@
 			const data = await response.json();
 			todos = [data.todo, ...todos];
 			newTodoText = '';
+			broadcastTodosUpdated();
 		} catch (error) {
 			console.error('Error creating todo:', error);
 		}
@@ -330,6 +357,7 @@
 			// Small delay to let check animation complete
 			setTimeout(() => {
 				todos = todos.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t));
+				broadcastTodosUpdated();
 			}, 150);
 		} catch (error) {
 			console.error('Error toggling todo:', error);
@@ -367,6 +395,7 @@
 			setTimeout(() => {
 				todos = todos.filter((todo) => todo.id !== id);
 				removingTodoIds.delete(id);
+				broadcastTodosUpdated();
 			}, 350); // slightly longer to ensure animation completes
 		} catch (error) {
 			console.error('Error deleting todo:', error);
@@ -421,6 +450,7 @@
 
 			editingId = null;
 			editText = '';
+			broadcastTodosUpdated();
 		} catch (error) {
 			console.error('Error saving todo:', error);
 			cancelEdit();
@@ -570,6 +600,8 @@
 				console.error('Reorder failed:', errorText);
 				throw new Error('Failed to save todo order');
 			}
+
+			broadcastTodosUpdated();
 		} catch (error) {
 			console.error('Error saving todo order:', error);
 		}

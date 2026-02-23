@@ -526,16 +526,21 @@
                                                     on:blur={saveEdit}
                                                 />
                                             {:else}
-                                                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                                <!-- svelte-ignore a11y-no-static-element-interactions -->
-                                                <span 
-                                                    class="todo-text"
-                                                    class:editable={canEdit}
-                                                    on:click={() => canEdit && startEdit(todo.id, todo.text)}
-                                                    title={canEdit ? "Click to edit" : ""}
-                                                >
-                                                    {todo.text}
-                                                </span>
+                                                <div class="todo-text-wrapper">
+                                                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                                                    <span 
+                                                        class="todo-text"
+                                                        class:editable={canEdit}
+                                                        on:click={() => canEdit && startEdit(todo.id, todo.text)}
+                                                        title={canEdit ? "Click to edit" : ""}
+                                                    >
+                                                        {todo.text}
+                                                    </span>
+                                                    {#if todo.project}
+                                                        <span class="project-tag">{todo.project}</span>
+                                                    {/if}
+                                                </div>
                                             {/if}
                                         </div>
                                         
@@ -591,16 +596,21 @@
                                                     on:blur={saveEdit}
                                                 />
                                             {:else}
-                                                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                                                <!-- svelte-ignore a11y-no-static-element-interactions -->
-                                                <span 
-                                                    class="todo-text completed"
-                                                    class:editable={canEdit}
-                                                    on:click={() => canEdit && startEdit(todo.id, todo.text)}
-                                                    title={canEdit ? "Click to edit" : ""}
-                                                >
-                                                    {todo.text}
-                                                </span>
+                                                <div class="todo-text-wrapper">
+                                                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                                                    <!-- svelte-ignore a11y-no-static-element-interactions -->
+                                                    <span 
+                                                        class="todo-text completed"
+                                                        class:editable={canEdit}
+                                                        on:click={() => canEdit && startEdit(todo.id, todo.text)}
+                                                        title={canEdit ? "Click to edit" : ""}
+                                                    >
+                                                        {todo.text}
+                                                    </span>
+                                                    {#if todo.project}
+                                                        <span class="project-tag">{todo.project}</span>
+                                                    {/if}
+                                                </div>
                                             {/if}
                                         </div>
                                         
@@ -894,6 +904,23 @@
     
     .todo-text.editable:hover {
         background: rgba(33, 150, 243, 0.1);
+    }
+    
+    .todo-text-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-1);
+        min-width: 0;
+    }
+    
+    .project-tag {
+        font-size: 10px;
+        color: var(--gray-600);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.7;
     }
     
     .todo-text.completed {
