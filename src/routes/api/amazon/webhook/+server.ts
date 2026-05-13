@@ -10,9 +10,18 @@ interface AmazonItem {
     currency: string
 }
 
-function extractEmail(from: string): string {
-    const match = from.match(/<([^>]+)>/)
-    return match ? match[1].trim() : from.trim()
+function extractEmail(from: unknown): string {
+    // ImprovMX may send `from` as a string, an object with an `address` field, or an array
+    let raw: string
+    if (Array.isArray(from)) {
+        raw = String((from[0] as any)?.address ?? from[0] ?? '')
+    } else if (from && typeof from === 'object') {
+        raw = String((from as any).address ?? (from as any).email ?? '')
+    } else {
+        raw = String(from ?? '')
+    }
+    const match = raw.match(/<([^>]+)>/)
+    return match ? match[1].trim() : raw.trim()
 }
 
 function parseOrderEmail(text: string): {
@@ -57,7 +66,7 @@ export const POST: RequestHandler = async ({ request }) => {
     }
 
     // ── Parse body ──
-    let body: { from?: string; date?: string; text?: string }
+    let body: { from?: unknown; date?: string; text?: string }
     try {
         body = await request.json()
     } catch {
