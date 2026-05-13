@@ -80,12 +80,17 @@ export const POST: RequestHandler = async ({ request }) => {
 
     // ── User lookup via auth.users ──
     const senderEmail = extractEmail(from)
-    const { data: userData } = await supabaseAdmin
+    console.log('[amazon/webhook] from raw:', JSON.stringify(from))
+    console.log('[amazon/webhook] senderEmail:', senderEmail)
+
+    const { data: userData, error: userError } = await supabaseAdmin
         .schema('auth')
         .from('users')
         .select('id')
         .eq('email', senderEmail)
         .single()
+
+    console.log('[amazon/webhook] user lookup:', { found: !!userData, error: userError?.message })
 
     if (!userData) {
         // Silent accept — don't leak whether the email is registered
@@ -93,7 +98,10 @@ export const POST: RequestHandler = async ({ request }) => {
     }
 
     // ── Parse email text ──
+    console.log('[amazon/webhook] text (first 500 chars):', text.slice(0, 500))
     const { orderNumber, items, total, currency } = parseOrderEmail(text)
+    console.log('[amazon/webhook] parsed:', { orderNumber, total, currency, itemCount: items.length, items })
+
     if (!orderNumber) {
         // Not a parseable order email; accept silently
         return json({ ok: true })
