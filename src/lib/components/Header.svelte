@@ -8,6 +8,7 @@
     import HabitTrackerModal from '$lib/components/HabitTrackerModal.svelte'
     import WritingModal from '$lib/components/writing/WritingModal.svelte'
     import KanbanBoard from '$lib/components/KanbanBoard.svelte'
+    import BudgetModal from '$lib/components/BudgetModal.svelte'
 
     let { data, calendarName, calendarId } = $props();
 
@@ -22,6 +23,7 @@
     let showHabitTracker = $state(false)
     let showWritingModal = $state(false)
     let showKanbanBoard = $state(false)
+    let showBudgetModal = $state(false)
 
     function startEditingTitle() {
         if (!$user || !calendarName) return
@@ -214,6 +216,13 @@
                         >
                             <span class="material-symbols-outlined" style="font-size: 20px;">edit_note</span>
                         </button>
+                        <button 
+                            onclick={() => showBudgetModal = true} 
+                            class="budget-button icon-button"
+                            title="Budget"
+                        >
+                            <span class="material-symbols-outlined" style="font-size: 20px;">account_balance_wallet</span>
+                        </button>
                         {#if canEdit}
                             <button 
                                 onclick={() => showExternalCalendarModal = true} 
@@ -303,6 +312,13 @@
                                 <span class="material-symbols-outlined">edit_note</span>
                                 Writing
                             </button>
+                            <button 
+                                onclick={() => { showBudgetModal = true; closeMobileMenu(); }} 
+                                class="mobile-menu-item"
+                            >
+                                <span class="material-symbols-outlined">account_balance_wallet</span>
+                                Budget
+                            </button>
                             {#if canEdit}
                                 <button 
                                     onclick={() => { showExternalCalendarModal = true; closeMobileMenu(); }} 
@@ -390,6 +406,12 @@
     shareToken={data?.sharedCalendar?.shareToken || null}
     on:close={() => showKanbanBoard = false}
 />
+
+{#if $user}
+    <BudgetModal 
+        bind:isOpen={showBudgetModal}
+    />
+{/if}
 
 <style>
             /* Typography overrides */
@@ -592,16 +614,6 @@
     .habit-button:hover {
         background: transparent;
         color: #db2777;
-    }
-    
-    .coach-button {
-        background: transparent;
-        color: #7c3aed;
-    }
-    
-    .coach-button:hover {
-        background: transparent;
-        color: #6d28d9;
     }
     
     .external-cal-button {

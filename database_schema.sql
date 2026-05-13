@@ -158,6 +158,73 @@ CREATE TABLE IF NOT EXISTS public.coaching_prompts (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
+-- Teller enrollments table (service role only)
+CREATE TABLE IF NOT EXISTS public.teller_enrollments (
+    user_id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+    access_token_ciphertext TEXT NOT NULL,
+    enrollment_id TEXT,
+    institution_name TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    revoked_at TIMESTAMPTZ
+);
+
+-- Teller accounts table
+CREATE TABLE IF NOT EXISTS public.teller_accounts (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users ON DELETE CASCADE NOT NULL,
+    teller_account_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    institution TEXT NOT NULL,
+    type TEXT,
+    subtype TEXT,
+    currency TEXT DEFAULT 'USD',
+    last_four TEXT,
+    status TEXT DEFAULT 'open',
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE(user_id, teller_account_id)
+);
+
+-- Teller sync state table
+CREATE TABLE IF NOT EXISTS public.teller_sync_state (
+    user_id UUID REFERENCES auth.users ON DELETE CASCADE NOT NULL,
+    teller_account_id TEXT NOT NULL,
+    last_synced_at TIMESTAMPTZ,
+    last_error TEXT,
+    PRIMARY KEY (user_id, teller_account_id)
+);
+
+-- User-managed transaction categories
+CREATE TABLE IF NOT EXISTS public.categories (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users ON DELETE CASCADE NOT NULL,
+    name TEXT NOT NULL,
+    sort_order INT DEFAULT 0,
+    stream TEXT DEFAULT 'Shared mission',
+    UNIQUE(user_id, name)
+);
+
+-- Transactions table
+CREATE TABLE IF NOT EXISTS public.transactions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users ON DELETE CASCADE NOT NULL,
+    teller_account_id TEXT NOT NULL,
+    teller_transaction_id TEXT NOT NULL,
+    posted_at DATE,
+    authorized_at DATE,
+    pending BOOLEAN DEFAULT FALSE,
+    amount NUMERIC NOT NULL,
+    currency TEXT DEFAULT 'USD',
+    description TEXT NOT NULL,
+    merchant TEXT,
+    raw JSONB,
+    category_auto TEXT,
+    category_user TEXT,
+    category_id UUID REFERENCES public.categories(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    UNIQUE(user_id, teller_transaction_id)
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_calendars_user_id ON public.calendars(user_id);
 CREATE INDEX IF NOT EXISTS idx_events_calendar_id ON public.events(calendar_id);
@@ -186,6 +253,13 @@ CREATE INDEX IF NOT EXISTS idx_goal_milestones_goal_id ON public.goal_milestones
 CREATE INDEX IF NOT EXISTS idx_goal_milestones_sort_index ON public.goal_milestones(goal_id, sort_index);
 CREATE INDEX IF NOT EXISTS idx_external_sync_calendar_url ON public.external_calendar_sync(calendar_id, external_url);
 CREATE INDEX IF NOT EXISTS idx_external_sync_last_synced ON public.external_calendar_sync(last_synced);
+CREATE INDEX IF NOT EXISTS idx_teller_accounts_user_id ON public.teller_accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_teller_sync_state_user_id ON public.teller_sync_state(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_posted ON public.transactions (user_id, posted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_account ON public.transactions (user_id, teller_account_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_category_id ON public.transactions (user_id, category_id);
+CREATE INDEX IF NOT EXISTS idx_categories_user_id ON public.categories (user_id);
+CREATE INDEX IF NOT EXISTS idx_categories_stream ON public.categories (user_id, stream);
 
 -- Enable Row Level Security
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
@@ -201,6 +275,14 @@ ALTER TABLE public.goal_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.goal_milestones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.external_calendar_sync ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coaching_prompts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.teller_enrollments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.teller_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.teller_sync_state ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+
+-- Explicitly revoke all direct access to encrypted Teller enrollment data
+REVOKE ALL ON public.teller_enrollments FROM anon, authenticated;
 
 -- RLS Policies for users table
 CREATE POLICY "Users can view own profile" ON public.users
@@ -510,6 +592,70 @@ CREATE POLICY "Users can manage sync metadata for own calendars" ON public.exter
 CREATE POLICY "All authenticated users can read coaching prompts" ON public.coaching_prompts
     FOR SELECT TO authenticated USING (true);
 
+-- RLS Policies for teller_accounts table
+CREATE POLICY "Users can view their own teller accounts"
+    ON public.teller_accounts FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own teller accounts"
+    ON public.teller_accounts FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own teller accounts"
+    ON public.teller_accounts FOR UPDATE
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own teller accounts"
+    ON public.teller_accounts FOR DELETE
+    USING (auth.uid() = user_id);
+
+-- RLS Policies for teller_sync_state table
+CREATE POLICY "Users can view their own sync state"
+    ON public.teller_sync_state FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can upsert their own sync state"
+    ON public.teller_sync_state FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own sync state"
+    ON public.teller_sync_state FOR UPDATE
+    USING (auth.uid() = user_id);
+
+-- RLS Policies for transactions table
+CREATE POLICY "Users can view their own transactions"
+    ON public.transactions FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own transactions"
+    ON public.transactions FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own transactions"
+    ON public.transactions FOR UPDATE
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own transactions"
+    ON public.transactions FOR DELETE
+    USING (auth.uid() = user_id);
+
+-- RLS Policies for categories table
+CREATE POLICY "Users can view their own categories"
+    ON public.categories FOR SELECT
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own categories"
+    ON public.categories FOR INSERT
+    WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own categories"
+    ON public.categories FOR UPDATE
+    USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own categories"
+    ON public.categories FOR DELETE
+    USING (auth.uid() = user_id);
+
 -- Functions and Triggers
 -- Function to automatically create a user record when they sign up
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -566,6 +712,9 @@ CREATE TRIGGER handle_updated_at_goal_milestones BEFORE UPDATE ON public.goal_mi
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 CREATE TRIGGER handle_updated_at_external_sync BEFORE UPDATE ON public.external_calendar_sync
+    FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+CREATE TRIGGER handle_updated_at_transactions BEFORE UPDATE ON public.transactions
     FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- Function to automatically update goal progress when progress entries are made

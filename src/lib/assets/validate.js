@@ -10,6 +10,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
+ * @typedef {Object} QuoteRecord
+ * @property {string} quote
+ * @property {string} author
+ * @property {string} source
+ */
+
+/**
+ * @typedef {Object} QuoteMatchResult
+ * @property {boolean} found
+ * @property {string | null} match
+ * @property {number} confidence
+ * @property {'exact' | 'near-exact' | 'fuzzy' | 'word-match' | ''} type
+ */
+
+/**
  * Fetch the content of a URL
  * @param {string} url - The URL to fetch
  * @returns {Promise<string>} The response body
@@ -98,7 +113,7 @@ function extractPotentialQuotes(content) {
  * Find the best matching quote in content using improved fuzzy matching
  * @param {string} quote - The quote to search for
  * @param {string} content - The content to search in
- * @returns {Object} Object with {found: boolean, match: string|null, confidence: number}
+ * @returns {QuoteMatchResult} Best match metadata
  */
 function findQuoteInContent(quote, content) {
     const cleanQuote = cleanText(quote);
@@ -117,6 +132,7 @@ function findQuoteInContent(quote, content) {
     
     let bestMatch = null;
     let bestScore = 0;
+    /** @type {QuoteMatchResult['type']} */
     let bestType = '';
     
     // Try to find fuzzy matches with stricter criteria
@@ -268,7 +284,7 @@ function levenshteinDistance(str1, str2) {
 
 /**
  * Validate a single quote
- * @param {Object} quoteObj - The quote object with quote, author, and source
+ * @param {QuoteRecord} quoteObj - The quote object with quote, author, and source
  * @param {number} index - The index of the quote for logging
  * @returns {Promise<boolean>} True if quote is validated
  */

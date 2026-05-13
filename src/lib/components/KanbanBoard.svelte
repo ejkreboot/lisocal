@@ -163,7 +163,17 @@
     $: todosByLane = lanes.reduce((acc, lane) => {
         acc[lane] = todos
             .filter(t => t.stage === lane && !t.completed)
-            .sort((a, b) => a.sort_index - b.sort_index)
+            .sort((a, b) => {
+                const pa = a.project ?? ''
+                const pb = b.project ?? ''
+                if (pa !== pb) {
+                    // No project sorts to the end
+                    if (!pa) return 1
+                    if (!pb) return -1
+                    return pa.localeCompare(pb)
+                }
+                return a.sort_index - b.sort_index
+            })
         return acc
     }, {} as Record<Lane, Todo[]>)
     

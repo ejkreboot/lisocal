@@ -631,7 +631,7 @@
         // Update the event's UTC timestamps
         events[eventIndex].startDatetimeUtc = newStartDatetimeUtc
         if (newEndDatetimeUtc !== undefined) {
-            events[eventIndex].endDatetimeUtc = newEndDatetimeUtc
+            events[eventIndex].endDatetimeUtc = newEndDatetimeUtc ?? undefined
         }
         
         // Redistribute events to calendar days
@@ -885,8 +885,17 @@
             
             <div 
                 class="agenda-content"
+                role="button"
+                tabindex="0"
+                aria-label="Add event for {day.date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}"
                 on:click|self={(e) => {
                     if (canEdit && !isEditing) {
+                        startEditing(Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7)
+                    }
+                }}
+                on:keydown|self={(e) => {
+                    if (canEdit && !isEditing && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
                         startEditing(Math.floor(calendarGrid.indexOf(day) / 7), calendarGrid.indexOf(day) % 7)
                     }
                 }}

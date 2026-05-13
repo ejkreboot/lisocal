@@ -598,15 +598,6 @@
         height: 32px;
     }
     
-    .btn-secondary {
-        background: var(--gray-100);
-        color: var(--dark-text);
-    }
-    
-    .btn-secondary:hover:not(:disabled) {
-        background: var(--gray-200);
-    }
-    
     .btn-danger {
         background: #ffebee;
         color: #D20E00;

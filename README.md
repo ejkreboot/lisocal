@@ -35,6 +35,7 @@ A seamless, easy personal calendar. Built with SvelteKit and Supabase.
 3. **Initialize the database**:
    - Run the SQL script in `database_schema.sql` in your Supabase SQL editor
    - This creates all necessary tables, RLS policies, and triggers
+   - For fresh installs, do **not** run any `migration_*.sql` files (they are archived and already merged into `database_schema.sql`)
 
 4. **Start developing**:
    ```bash
@@ -96,6 +97,7 @@ The codebase follows the guiding principle of minimizing friction. Key files:
 - `src/lib/components/CalendarMonth.svelte` - Main calendar component
 - `src/hooks.server.ts` - Authentication and shared link handling
 - `database_schema.sql` - Complete database setup
+- `migration_*.sql` - Archived migration history for legacy environments
 
 ## Deployment
 

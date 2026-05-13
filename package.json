@@ -39,6 +39,7 @@
 		"@fontsource/monaspace-xenon": "^5.2.5",
 		"@supabase/ssr": "^0.7.0",
 		"@supabase/supabase-js": "^2.78.0",
+		"chart.js": "^4.5.1",
 		"marked": "^16.4.1",
 		"node-ical": "^0.22.1"
 	}

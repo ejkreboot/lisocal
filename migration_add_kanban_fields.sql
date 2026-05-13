@@ -1,5 +1,9 @@
+-- ARCHIVED MIGRATION (kept for historical reference)
+-- New environments should run only `database_schema.sql`.
+-- This file was merged into `database_schema.sql` on 2026-03-04.
+
 -- Migration to add Kanban fields to todos table
--- Run this in the Supabase SQL editor for existing databases
+-- Run this in the Supabase SQL editor for legacy environments only
 
 -- Add stage column (defaults to 'Ready' for existing todos)
 ALTER TABLE public.todos 
