@@ -84,7 +84,6 @@ export const POST: RequestHandler = async ({ request }) => {
     console.log('[amazon/webhook] senderEmail:', senderEmail)
 
     const { data: userData, error: userError } = await supabaseAdmin
-        .schema('auth')
         .from('users')
         .select('id')
         .eq('email', senderEmail)
