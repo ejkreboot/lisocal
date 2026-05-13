@@ -30,8 +30,10 @@ function parseOrderEmail(text: string): {
     total: number | null
     currency: string
 } {
+    // Strip email forward quote prefixes ("> " or ">") from each line
+    const unquoted = text.replace(/^>[ \t]?/gm, '')
     // Strip quoted-printable soft line breaks in case ImprovMX doesn't decode them
-    const decoded = text.replace(/=\r?\n/g, '')
+    const decoded = unquoted.replace(/=\r?\n/g, '')
 
     const orderMatch = decoded.match(/Order #\r?\n([^\r\n]+)/)
     const orderNumber = orderMatch ? orderMatch[1].trim() : null
