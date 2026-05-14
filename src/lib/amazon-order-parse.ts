@@ -118,6 +118,16 @@ function normaliseTokens(tokens: string[]): string[] {
 			continue;
 		}
 
+		// Concatenated price without decimal — e.g. "$1179" meaning $11.79
+		// Some clients (StartMail web) render the <sup> price as a plain string.
+		// Only normalise if it doesn't already have a decimal point.
+		if (/^\$\d{3,}$/.test(t)) {
+			const digits = t.slice(1); // strip leading $
+			out.push(`$${digits.slice(0, -2)}.${digits.slice(-2)}`);
+			i++;
+			continue;
+		}
+
 		out.push(t);
 		i++;
 	}
@@ -129,7 +139,7 @@ function normaliseTokens(tokens: string[]): string[] {
 
 const ORDER_RE    = /^Order\s+#\s*([\d-]+)$/;
 const QUANTITY_RE = /^Quantity:\s*(\d+)$/;
-const PRICE_RE    = /^\$[\d,]+\.\d{2}$/;
+const PRICE_RE    = /^\$[\d,]+(\.\d{2})?$/;
 const TOTAL_RE    = /^(Grand\s+)?Total:?$/i;
 
 function matchPatterns(tokens: string[]): OrderResult {
