@@ -2,13 +2,7 @@ import { json } from '@sveltejs/kit'
 import type { RequestHandler } from './$types'
 import { supabaseAdmin } from '$lib/supabase-admin.js'
 import { IMPROVMX_IP } from '$env/static/private'
-
-interface AmazonItem {
-    name: string
-    quantity: number
-    amount: number
-    currency: string
-}
+import { parseAmazonOrderEmail } from '$lib/amazon-order-parse'
 
 function extractEmail(from: unknown): string {
     // ImprovMX may send `from` as a string, an object with an `address` field, or an array
@@ -24,39 +18,6 @@ function extractEmail(from: unknown): string {
     return match ? match[1].trim() : raw.trim()
 }
 
-function parseOrderEmail(text: string): {
-    orderNumber: string | null
-    items: AmazonItem[]
-    total: number | null
-    currency: string
-} {
-    // Strip email forward quote prefixes ("> " or ">") from each line
-    const unquoted = text.replace(/^>[ \t]?/gm, '')
-    // Strip quoted-printable soft line breaks in case ImprovMX doesn't decode them
-    const decoded = unquoted.replace(/=\r?\n/g, '')
-
-    const orderMatch = decoded.match(/Order #\r?\n([^\r\n]+)/)
-    const orderNumber = orderMatch ? orderMatch[1].trim() : null
-
-    const items: AmazonItem[] = []
-    const itemRegex = /^\* (.+)\r?\n[ \t]+Quantity: (\d+)\r?\n[ \t]+([\d.]+) ([A-Z]+)/gm
-    let itemMatch
-    while ((itemMatch = itemRegex.exec(decoded)) !== null) {
-        items.push({
-            name: itemMatch[1].trim(),
-            quantity: parseInt(itemMatch[2], 10),
-            amount: parseFloat(itemMatch[3]),
-            currency: itemMatch[4]
-        })
-    }
-
-    const totalMatch = decoded.match(/^Total\r?\n([\d.]+) ([A-Z]+)/m)
-    const total = totalMatch ? parseFloat(totalMatch[1]) : null
-    const currency = totalMatch ? totalMatch[2] : (items[0]?.currency ?? 'USD')
-
-    return { orderNumber, items, total, currency }
-}
-
 export const POST: RequestHandler = async ({ request }) => {
     // ── IP validation ──
     const allowedIPs = IMPROVMX_IP.split(',').map((ip) => ip.trim())
@@ -68,15 +29,15 @@ export const POST: RequestHandler = async ({ request }) => {
     }
 
     // ── Parse body ──
-    let body: { from?: unknown; date?: string; text?: string }
+    let body: { from?: unknown; date?: string; html?: string }
     try {
         body = await request.json()
     } catch {
         return json({ error: 'Invalid JSON' }, { status: 400 })
     }
 
-    const { from, date, text } = body
-    if (!from || !text) {
+    const { from, date, html } = body
+    if (!from || !html || typeof html !== 'string') {
         return json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -98,24 +59,27 @@ export const POST: RequestHandler = async ({ request }) => {
         return json({ ok: true })
     }
 
-    // ── Parse email text ──
-    console.log('[amazon/webhook] text (first 500 chars):', text.slice(0, 500))
-    const { orderNumber, items, total, currency } = parseOrderEmail(text)
-    console.log('[amazon/webhook] parsed:', { orderNumber, total, currency, itemCount: items.length, items })
+    // ── Parse email HTML ──
+    console.log('[amazon/webhook] html (first 500 chars):', html.slice(0, 500))
+    const { order, items, grandTotal } = parseAmazonOrderEmail(html)
+    console.log('[amazon/webhook] parsed:', { order, grandTotal, itemCount: items.length, items })
 
-    if (!orderNumber) {
+    if (!order) {
         // Not a parseable order email; accept silently
         return json({ ok: true })
     }
+
+    const total = grandTotal ? parseFloat(grandTotal.replace(/[$,]/g, '')) : null
+    const currency = grandTotal ? 'USD' : null
 
     // ── Upsert into amazon_orders ──
     const { error: upsertError } = await supabaseAdmin.from('amazon_orders').upsert(
         {
             user_id: userData.id,
-            order_number: orderNumber,
+            order_number: order,
             order_date: date ? new Date(date).toISOString() : null,
             email_from: senderEmail,
-            email_raw: text,
+            email_raw: html,
             items,
             total,
             currency,
