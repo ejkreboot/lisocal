@@ -54,11 +54,20 @@ function decodeQP(input: string): string {
 
 // Amazon's price spans carry structured data in aria-label:
 //   aria-label="{amount=12.99, currencyCode={...}}"
-// This is more reliable than concatenating the visual $/<sup>12</sup><sup>99</sup>.
+// Some clients (e.g. StartMail web) strip aria-label attributes, so we also
+// support a DOM fallback that reconstructs from the <sup>$</sup>12<sup>99</sup>
+// visual structure.
 function tryAriaPrice(node: HTMLElement): string | null {
 	const label = node.getAttribute('aria-label') ?? '';
 	const m = label.match(/amount=([\d.]+)/);
 	return m ? `$${parseFloat(m[1]).toFixed(2)}` : null;
+}
+
+function trySupPrice(node: HTMLElement): string | null {
+	// Collapse all text under this node and match $<dollars><cents> with no decimal
+	const allText = node.text.replace(/\s+/g, '');
+	const m = allText.match(/^\$(\d+)(\d{2})$/);
+	return m ? `$${m[1]}.${m[2]}` : null;
 }
 
 // Walks to the deepest text-bearing nodes, skipping purely structural wrappers.
@@ -71,6 +80,15 @@ function leafText(node: HTMLElement): string {
 
 	const elementChildren = children.filter((c) => c.nodeType === 1) as HTMLElement[];
 	if (elementChildren.length === 0) return children.map((c) => c.text ?? '').join('');
+
+	// If children are <sup> tags this is a price node — try sup reconstruction
+	const allSup = elementChildren.every(
+		(e) => (e as HTMLElement).rawTagName?.toLowerCase() === 'sup'
+	);
+	if (allSup) {
+		const supPrice = trySupPrice(node);
+		if (supPrice) return supPrice;
+	}
 
 	return elementChildren.map(leafText).join(' ');
 }
@@ -92,10 +110,35 @@ function cleanText(raw: string): string {
 // the text of the second <td> (the amount).
 
 function extractGrandTotal(root: ReturnType<typeof parse>): string | null {
+	const PRICE_RE = /\$[\d,]+\.\d{2}/;
+
 	for (const tr of root.querySelectorAll('tr')) {
 		const tds = tr.querySelectorAll('td');
-		if (tds.length === 2 && tds[0].text.replace(/\s+/g, ' ').trim() === 'Grand Total:') {
-			return tds[1].text.replace(/\s+/g, ' ').trim() || null;
+
+		// Pattern A — two sibling TDs: "Grand Total:" | "$27.35"
+		// (macOS Mail / standard Amazon template)
+		if (tds.length === 2) {
+			const label = tds[0].text.replace(/\s+/g, ' ').trim();
+			const value = tds[1].text.replace(/\s+/g, ' ').trim();
+			if (/^Grand Total:?$/.test(label) && PRICE_RE.test(value)) {
+				return value.match(PRICE_RE)![0];
+			}
+		}
+
+		// Pattern B — single TD containing both label and amount: "Total $15.27"
+		// (StartMail web client collapses the row into nested tables)
+		// Pick the innermost (fewest child TDs) matching TD to avoid outer containers.
+		let bestMatch: { td: ReturnType<typeof parse> | null; childCount: number } = { td: null, childCount: Infinity };
+		for (const td of tds) {
+			const text = td.text.replace(/\s+/g, ' ').trim();
+			if (/^(Grand )?Total/.test(text) && PRICE_RE.test(text)) {
+				const childCount = td.querySelectorAll('td').length;
+				if (childCount < bestMatch.childCount) bestMatch = { td, childCount };
+			}
+		}
+		if (bestMatch.td) {
+			const text = (bestMatch.td as HTMLElement).text.replace(/\s+/g, ' ').trim();
+			return text.match(PRICE_RE)![0];
 		}
 	}
 	return null;
