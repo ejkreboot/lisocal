@@ -4,12 +4,15 @@
  * Parses the HTML part of an Amazon order/shipment email (as delivered by
  * ImprovMX or similar) and extracts structured order data.
  *
+ * Works with emails forwarded from any client (macOS Mail, StartMail web,
+ * Gmail) by operating purely on text nodes rather than CSS class selectors.
+ *
  * Usage:
  *   import { parseAmazonOrderEmail } from '$lib/amazon-order-parser';
  *   const order = parseAmazonOrderEmail(htmlString);
  */
 
-import { parse, type HTMLElement } from 'node-html-parser';
+import { parse } from 'node-html-parser';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -27,8 +30,7 @@ export interface OrderResult {
 
 // ── Quoted-Printable decoder ──────────────────────────────────────────────────
 // ImprovMX may deliver the HTML already decoded, but this is a no-op if so.
-// Handles multi-byte UTF-8 sequences (e.g. em-dash =E2=80=93) correctly by
-// accumulating raw bytes before converting to a string.
+// Handles multi-byte UTF-8 sequences correctly by accumulating raw bytes.
 
 function decodeQP(input: string): string {
 	const joined = input.replace(/=\r?\n/g, '');
@@ -50,48 +52,7 @@ function decodeQP(input: string): string {
 	return Buffer.from(bytes).toString('utf8');
 }
 
-// ── Leaf text extractor ───────────────────────────────────────────────────────
-
-// Amazon's price spans carry structured data in aria-label:
-//   aria-label="{amount=12.99, currencyCode={...}}"
-// Some clients (e.g. StartMail web) strip aria-label attributes, so we also
-// support a DOM fallback that reconstructs from the <sup>$</sup>12<sup>99</sup>
-// visual structure.
-function tryAriaPrice(node: HTMLElement): string | null {
-	const label = node.getAttribute('aria-label') ?? '';
-	const m = label.match(/amount=([\d.]+)/);
-	return m ? `$${parseFloat(m[1]).toFixed(2)}` : null;
-}
-
-function trySupPrice(node: HTMLElement): string | null {
-	// Collapse all text under this node and match $<dollars><cents> with no decimal
-	const allText = node.text.replace(/\s+/g, '');
-	const m = allText.match(/^\$(\d+)(\d{2})$/);
-	return m ? `$${m[1]}.${m[2]}` : null;
-}
-
-// Walks to the deepest text-bearing nodes, skipping purely structural wrappers.
-function leafText(node: HTMLElement): string {
-	const ariaPrice = tryAriaPrice(node);
-	if (ariaPrice) return ariaPrice;
-
-	const children = node.childNodes;
-	if (!children || children.length === 0) return node.text ?? '';
-
-	const elementChildren = children.filter((c) => c.nodeType === 1) as HTMLElement[];
-	if (elementChildren.length === 0) return children.map((c) => c.text ?? '').join('');
-
-	// If children are <sup> tags this is a price node — try sup reconstruction
-	const allSup = elementChildren.every(
-		(e) => (e as HTMLElement).rawTagName?.toLowerCase() === 'sup'
-	);
-	if (allSup) {
-		const supPrice = trySupPrice(node);
-		if (supPrice) return supPrice;
-	}
-
-	return elementChildren.map(leafText).join(' ');
-}
+// ── Text node extractor ───────────────────────────────────────────────────────
 
 function cleanText(raw: string): string {
 	return raw
@@ -100,76 +61,108 @@ function cleanText(raw: string): string {
 		.replace(/&gt;/g, '>')
 		.replace(/&nbsp;/g, ' ')
 		.replace(/&quot;/g, '"')
-		.replace(/[\u200b\u200c\u200d\u202a\u202b\u202c\u202d\u202e]/g, '') // bidi / zero-width
+		.replace(/[\u00ad\u200b\u200c\u200d\u202a\u202b\u202c\u202d\u202e\u034f]/g, '')
 		.replace(/\s+/g, ' ')
 		.trim();
 }
 
-// ── Grand total extractor ─────────────────────────────────────────────────────
-// Finds the <tr> whose first <td> text is exactly "Grand Total:" and returns
-// the text of the second <td> (the amount).
+// Walk the DOM and collect all non-empty text nodes, deduplicated.
+function extractTextNodes(html: string): string[] {
+	const root = parse(html);
+	const SKIP = /^[\s\u00a0]*$/;
+	const raw: string[] = [];
 
-function extractGrandTotal(root: ReturnType<typeof parse>): string | null {
-	const PRICE_RE = /\$[\d,]+\.\d{2}/;
-
-	for (const tr of root.querySelectorAll('tr')) {
-		const tds = tr.querySelectorAll('td');
-
-		// Pattern A — two sibling TDs: "Grand Total:" | "$27.35"
-		// (macOS Mail / standard Amazon template)
-		if (tds.length === 2) {
-			const label = tds[0].text.replace(/\s+/g, ' ').trim();
-			const value = tds[1].text.replace(/\s+/g, ' ').trim();
-			if (/^Grand Total:?$/.test(label) && PRICE_RE.test(value)) {
-				return value.match(PRICE_RE)![0];
+	for (const el of root.querySelectorAll('*')) {
+		for (const child of el.childNodes) {
+			if (child.nodeType === 3) {
+				const t = cleanText(child.text);
+				if (t && !SKIP.test(t)) raw.push(t);
 			}
-		}
-
-		// Pattern B — single TD containing both label and amount: "Total $15.27"
-		// (StartMail web client collapses the row into nested tables)
-		// Pick the innermost (fewest child TDs) matching TD to avoid outer containers.
-		let bestMatch: { td: ReturnType<typeof parse> | null; childCount: number } = { td: null, childCount: Infinity };
-		for (const td of tds) {
-			const text = td.text.replace(/\s+/g, ' ').trim();
-			if (/^(Grand )?Total/.test(text) && PRICE_RE.test(text)) {
-				const childCount = td.querySelectorAll('td').length;
-				if (childCount < bestMatch.childCount) bestMatch = { td, childCount };
-			}
-		}
-		if (bestMatch.td) {
-			const text = (bestMatch.td as HTMLElement).text.replace(/\s+/g, ' ').trim();
-			return text.match(PRICE_RE)![0];
 		}
 	}
-	return null;
+
+	// Deduplicate consecutive identical values (forwarding wrappers repeat content)
+	return raw.filter((t, i) => t !== raw[i - 1]);
+}
+
+// ── Token normaliser ──────────────────────────────────────────────────────────
+// Merges tokens that are split across text nodes by the email renderer:
+//
+//   "Order #"  +  "113-456-789"   →  "Order # 113-456-789"
+//   "$"  +  "12"  +  "99"         →  "$12.99"   (any order of $ / int / cents)
+
+function normaliseTokens(tokens: string[]): string[] {
+	const out: string[] = [];
+	let i = 0;
+
+	while (i < tokens.length) {
+		const t = tokens[i];
+
+		// "Order #" header split from the number
+		if (/^Order\s*#\s*$/.test(t) && i + 1 < tokens.length) {
+			out.push(`Order # ${tokens[i + 1].trim()}`);
+			i += 2;
+			continue;
+		}
+
+		// Split price — DOM walk always produces: integer, "$", cents
+		// e.g. "12", "$", "99"  →  "$12.99"
+		if (
+			i + 2 < tokens.length &&
+			/^\d+$/.test(t) &&
+			tokens[i + 1] === '$' &&
+			/^\d{2}$/.test(tokens[i + 2])
+		) {
+			out.push(`$${t}.${tokens[i + 2]}`);
+			i += 3;
+			continue;
+		}
+
+		out.push(t);
+		i++;
+	}
+
+	return out;
 }
 
 // ── Pattern matchers ──────────────────────────────────────────────────────────
 
-const ORDER_RE = /^Order\s+#\s*([\d-]+)$/;
+const ORDER_RE    = /^Order\s+#\s*([\d-]+)$/;
 const QUANTITY_RE = /^Quantity:\s*(\d+)$/;
-const PRICE_RE = /^\$[\d,]+\.\d{2}$/;
+const PRICE_RE    = /^\$[\d,]+\.\d{2}$/;
+const TOTAL_RE    = /^(Grand\s+)?Total:?$/i;
 
-function matchPatterns(lines: string[], grandTotal: string | null): OrderResult {
+function matchPatterns(tokens: string[]): OrderResult {
 	let order: string | null = null;
+	let grandTotal: string | null = null;
 	const items: OrderItem[] = [];
 
-	for (let i = 0; i < lines.length; i++) {
-		const orderMatch = lines[i].match(ORDER_RE);
+	for (let i = 0; i < tokens.length; i++) {
+		// Order number
+		const orderMatch = tokens[i].match(ORDER_RE);
 		if (orderMatch) {
 			order = orderMatch[1];
 			continue;
 		}
 
-		// Triplet: item name at i-1, "Quantity: N" at i, price at i+1
-		const qtyMatch = lines[i].match(QUANTITY_RE);
-		if (qtyMatch && i >= 1 && PRICE_RE.test(lines[i + 1])) {
+		// Grand total — label followed by price on next token
+		if (TOTAL_RE.test(tokens[i])) {
+			if (i + 1 < tokens.length && PRICE_RE.test(tokens[i + 1])) {
+				grandTotal = tokens[i + 1];
+				i += 1;
+			}
+			continue;
+		}
+
+		// Item triplet: item name at i-1, "Quantity: N" at i, price at i+1
+		const qtyMatch = tokens[i].match(QUANTITY_RE);
+		if (qtyMatch && i >= 1 && i + 1 < tokens.length && PRICE_RE.test(tokens[i + 1])) {
 			items.push({
-				item: lines[i - 1],
+				item:     tokens[i - 1],
 				quantity: parseInt(qtyMatch[1], 10),
-				price: lines[i + 1]
+				price:    tokens[i + 1]
 			});
-			i += 1; // skip the price line we just consumed
+			i += 1;
 		}
 	}
 
@@ -183,17 +176,12 @@ function matchPatterns(lines: string[], grandTotal: string | null): OrderResult 
  *
  * @param html - The raw HTML string from ImprovMX's `html` field.
  *               May be quoted-printable encoded or already decoded.
- * @returns Structured order data, or `{ order: null, items: [] }` if no
- *          recognisable content is found.
+ *               Works with output from macOS Mail, StartMail, or Gmail forwards.
+ * @returns Structured order data, or `{ order: null, items: [], grandTotal: null }`
+ *          if no recognisable content is found.
  */
 export function parseAmazonOrderEmail(html: string): OrderResult {
-	// Decode QP if needed (no-op if already plain HTML)
 	const decoded = html.includes('=3D') ? decodeQP(html) : html;
-	const root = parse(decoded);
-	const lines = root
-		.querySelectorAll('[class*="rio-text"]')
-		.map((el) => cleanText(leafText(el)))
-		.filter((t) => t.length > 0);
-	const grandTotal = extractGrandTotal(root);
-	return matchPatterns(lines, grandTotal);
+	const tokens  = normaliseTokens(extractTextNodes(decoded));
+	return matchPatterns(tokens);
 }
